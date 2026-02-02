@@ -1,6 +1,6 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import { AuthProvider } from '@/contexts/AuthContext'
+import { ClientAuthProvider } from '@/contexts/AuthContext'
 
 export const metadata: Metadata = {
   title: 'Sevkiyat Bildirim Sistemi',
@@ -15,9 +15,9 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body className="min-h-screen bg-gray-50">
-        <AuthProvider>
+        <ClientAuthProvider>
           {children}
-        </AuthProvider>
+        </ClientAuthProvider>
       </body>
     </html>
   )

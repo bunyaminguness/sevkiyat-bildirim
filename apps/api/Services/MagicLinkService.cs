@@ -155,6 +155,7 @@ public class MagicLinkService : IMagicLinkService
 
         // Generate JWT token
         var jwtToken = _authService.GenerateJwtToken(user);
+        var isAdminMagic = user.Role == "Admin" || user.Role == "0";
 
         _logger.LogInformation("Magic link validated successfully for {Email}", user.Email);
 
@@ -165,7 +166,8 @@ public class MagicLinkService : IMagicLinkService
                 user.Role,
                 user.DisplayName,
                 user.StoreCode,
-                user.ProfileImageUrl
+                user.ProfileImageUrl,
+                isAdminMagic
             ),
             jwtToken
         );
