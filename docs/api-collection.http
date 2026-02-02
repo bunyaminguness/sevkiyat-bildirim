@@ -1,0 +1,124 @@
+# API Endpoint Testing
+
+## Authentication
+
+### Login
+```http
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "manager@demo.com",
+  "password": "Demo123!"
+}
+```
+
+### Get Current User
+```http
+GET http://localhost:5000/api/auth/me
+```
+
+### Logout
+```http
+POST http://localhost:5000/api/auth/logout
+```
+
+## Reports
+
+### List Reports
+```http
+GET http://localhost:5000/api/reports
+GET http://localhost:5000/api/reports?status=Sent
+GET http://localhost:5000/api/reports?search=SK-2026
+GET http://localhost:5000/api/reports?startDate=2026-01-01&endDate=2026-12-31&type=Missing&page=1&pageSize=20
+```
+
+### Get Report by ID
+```http
+GET http://localhost:5000/api/reports/1
+```
+
+### Create Report
+```http
+POST http://localhost:5000/api/reports
+Content-Type: application/json
+
+{
+  "storeCode": "IST001",
+  "type": "Missing",
+  "tplNo": "TPL20260131002",
+  "waybillNo": "WB999999",
+  "shipmentDate": "2026-01-31",
+  "notes": "Test report",
+  "items": [
+    {
+      "productNo": "PRD001",
+      "productName": "Test Product",
+      "qty": 5
+    }
+  ]
+}
+```
+
+### Update Report
+```http
+PUT http://localhost:5000/api/reports/3
+Content-Type: application/json
+
+{
+  "storeCode": "IST001",
+  "type": "Missing",
+  "tplNo": "TPL20260131001",
+  "waybillNo": "WB888888",
+  "shipmentDate": "2026-01-31",
+  "notes": "Updated notes",
+  "items": [
+    {
+      "productNo": "PRD004",
+      "productName": "Ürün D",
+      "qty": 15
+    }
+  ]
+}
+```
+
+### Send Report
+```http
+POST http://localhost:5000/api/reports/3/send
+Content-Type: application/json
+
+{
+  "sendViaSmtp": false
+}
+```
+
+### Accept Report
+```http
+POST http://localhost:5000/api/reports/1/accept
+```
+
+### Reject Report
+```http
+POST http://localhost:5000/api/reports/1/reject
+Content-Type: application/json
+
+{
+  "rejectionReason": "Fotoğraf eksik",
+  "note": "Lütfen hasar fotoğraflarını ekleyin"
+}
+```
+
+### Revise and Resend
+```http
+POST http://localhost:5000/api/reports/2/revise-resend
+Content-Type: application/json
+
+{
+  "sendViaSmtp": false
+}
+```
+
+### Close Report
+```http
+POST http://localhost:5000/api/reports/1/close
+```
