@@ -119,6 +119,7 @@ public class AuthService : IAuthService
 
         // Generate token
         var token = GenerateJwtToken(user);
+        var isAdmin = user.Role == "Admin" || user.Role == "0";
 
         var userDto = new UserDto(
             user.Id,
@@ -126,7 +127,8 @@ public class AuthService : IAuthService
             user.Role,
             user.DisplayName,
             user.StoreCode,
-            user.ProfileImageUrl
+            user.ProfileImageUrl,
+            isAdmin
         );
 
         return new LoginResponse(userDto, token);

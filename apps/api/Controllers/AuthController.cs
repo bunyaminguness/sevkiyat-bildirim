@@ -54,13 +54,15 @@ public class AuthController : ControllerBase
                 Expires = DateTimeOffset.UtcNow.AddDays(7)
             });
 
+            var isAdmin = user.Role == "Admin" || user.Role == "0";
             var userDto = new UserDto(
                 user.Id,
                 user.Email,
                 user.Role,
                 user.DisplayName,
                 user.StoreCode,
-                user.ProfileImageUrl
+                user.ProfileImageUrl,
+                isAdmin
             );
 
             return Ok(new LoginResponse(userDto, token));
