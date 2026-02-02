@@ -14,7 +14,8 @@ public record UserDto(
     string Role,
     string DisplayName,
     string? StoreCode,
-    string? ProfileImageUrl = null
+    string? ProfileImageUrl = null,
+    bool IsAdmin = false
 );
 
 // Report DTOs

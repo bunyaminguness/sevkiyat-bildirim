@@ -51,7 +51,7 @@ namespace SevkiyatBildirimApi.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("AllowedUsers");
+                    b.ToTable("AllowedUsers", (string)null);
                 });
 
             modelBuilder.Entity("SevkiyatBildirimApi.Models.EmailLog", b =>
@@ -93,7 +93,7 @@ namespace SevkiyatBildirimApi.Migrations
 
                     b.HasIndex("ReportId");
 
-                    b.ToTable("EmailLogs");
+                    b.ToTable("EmailLogs", (string)null);
 
                     b.HasData(
                         new
@@ -154,7 +154,7 @@ namespace SevkiyatBildirimApi.Migrations
                     b.HasIndex("Token")
                         .IsUnique();
 
-                    b.ToTable("MagicLinkTokens");
+                    b.ToTable("MagicLinkTokens", (string)null);
                 });
 
             modelBuilder.Entity("SevkiyatBildirimApi.Models.Report", b =>
@@ -233,7 +233,7 @@ namespace SevkiyatBildirimApi.Migrations
 
                     b.HasIndex("TplNo");
 
-                    b.ToTable("Reports");
+                    b.ToTable("Reports", (string)null);
 
                     b.HasData(
                         new
@@ -321,7 +321,7 @@ namespace SevkiyatBildirimApi.Migrations
 
                     b.HasIndex("ReportId");
 
-                    b.ToTable("ReportActions");
+                    b.ToTable("ReportActions", (string)null);
 
                     b.HasData(
                         new
@@ -427,7 +427,7 @@ namespace SevkiyatBildirimApi.Migrations
 
                     b.HasIndex("ReportId");
 
-                    b.ToTable("ReportItems");
+                    b.ToTable("ReportItems", (string)null);
 
                     b.HasData(
                         new
@@ -526,7 +526,7 @@ namespace SevkiyatBildirimApi.Migrations
 
                     b.HasIndex("ProviderId");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
 
                     b.HasData(
                         new
