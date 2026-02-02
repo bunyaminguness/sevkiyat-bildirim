@@ -1,8 +1,6 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import { useEffect, useState } from 'react';
 
 export default function AdminLayout({
     children,
@@ -11,45 +9,6 @@ export default function AdminLayout({
 }) {
     const router = useRouter();
     const pathname = usePathname();
-    const { isAdmin, loading } = useAuth();
-    const [showUnauthorized, setShowUnauthorized] = useState(false);
-
-    useEffect(() => {
-        if (!loading && !isAdmin) {
-            setShowUnauthorized(true);
-            const timer = setTimeout(() => {
-                router.push('/reports');
-            }, 2000);
-            return () => clearTimeout(timer);
-        }
-    }, [isAdmin, loading, router]);
-
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Yükleniyor...</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (showUnauthorized || !isAdmin) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
-                    <div className="mx-auto h-16 w-16 bg-red-100 rounded-full flex items-center justify-center">
-                        <svg className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                    </div>
-                    <h3 className="mt-4 text-lg font-semibold text-gray-900">Yetkiniz Yok</h3>
-                    <p className="mt-2 text-sm text-gray-600">Bu sayfa sadece yöneticiler içindir. Ana sayfaya yönlendiriliyorsunuz...</p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-gray-50">
