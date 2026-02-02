@@ -253,10 +253,7 @@ public class AdminController : ControllerBase
 
         if (!string.IsNullOrEmpty(status))
         {
-            if (Enum.TryParse<ReportStatus>(status, true, out var statusEnum))
-            {
-                query = query.Where(r => r.Status == statusEnum);
-            }
+            query = query.Where(r => r.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
         }
 
         if (!string.IsNullOrEmpty(storeCode))
@@ -305,18 +302,20 @@ public class AdminController : ControllerBase
             return NotFound(new { message = "Rapor bulunamadı." });
         }
 
-        if (!Enum.TryParse<ReportStatus>(request.Status, true, out var newStatus))
+        // Validate status value
+        var validStatuses = new[] { "Draft", "Sent", "Accepted", "Rejected", "Closed" };
+        if (!validStatuses.Contains(request.Status, StringComparer.OrdinalIgnoreCase))
         {
             return BadRequest(new { message = "Geçersiz durum." });
         }
 
-        report.Status = newStatus;
+        report.Status = request.Status;
         report.UpdatedAt = DateTime.UtcNow;
         
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Admin updated report {ReportNo} status to {Status}", report.ReportNo, newStatus);
+        _logger.LogInformation("Admin updated report {ReportNo} status to {Status}", report.ReportNo, request.Status);
 
-        return Ok(new { message = "Rapor durumu güncellendi.", status = newStatus.ToString() });
+        return Ok(new { message = "Rapor durumu güncellendi.", status = request.Status });
     }
 }
