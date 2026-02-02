@@ -50,7 +50,7 @@ export default function ReportsPage() {
         };
 
         return (
-            <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${styles[status] || 'bg-gray-50 text-gray-600 ring-gray-500/10'}`}>
+            <span className={`inline-flex items-center rounded-md px-3 py-1.5 text-sm font-bold ring-1 ring-inset ${styles[status] || 'bg-gray-50 text-gray-600 ring-gray-500/10'}`}>
                 {labels[status] || status}
             </span>
         );
@@ -160,7 +160,7 @@ export default function ReportsPage() {
                 ) : (
                     <div className="space-y-4">
                         {/* Desktop Header */}
-                        <div className="hidden md:grid grid-cols-8 gap-4 px-6 py-3 bg-gray-50/50 rounded-lg text-xs font-semibold text-gray-500 uppercase tracking-wider items-center border border-gray-100">
+                        <div className="hidden md:grid grid-cols-8 gap-4 px-6 py-3 bg-gray-50/50 rounded-lg text-sm font-bold text-gray-700 uppercase tracking-wider items-center border border-gray-100">
                             <div className="col-span-1 pl-2">Rapor No</div>
                             <div className="col-span-1">Durum</div>
                             <div className="col-span-1">E-posta</div>
@@ -184,7 +184,7 @@ export default function ReportsPage() {
                                         {/* Mobile Header for Report No */}
                                         <div className="flex justify-between md:block col-span-1">
                                             <span className="md:hidden text-xs text-gray-500 font-medium">Rapor No</span>
-                                            <span className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 font-mono">
+                                            <span className="text-base font-semibold text-gray-900 group-hover:text-blue-600 font-mono">
                                                 {report.reportNo}
                                             </span>
                                         </div>
@@ -204,13 +204,13 @@ export default function ReportsPage() {
                                         {/* Store Code */}
                                         <div className="flex justify-between md:block col-span-1">
                                             <span className="md:hidden text-xs text-gray-500 font-medium">Mağaza</span>
-                                            <span className="text-sm text-gray-900 font-medium">{report.storeCode}</span>
+                                            <span className="text-base text-gray-900 font-semibold">{report.storeCode}</span>
                                         </div>
 
                                         {/* TPL No */}
                                         <div className="flex justify-between md:block col-span-1">
                                             <span className="md:hidden text-xs text-gray-500 font-medium">TPL No</span>
-                                            <span className="text-sm text-gray-500 font-mono">
+                                            <span className="text-base text-gray-700 font-mono">
                                                 {report.tplNo}
                                             </span>
                                         </div>
@@ -218,7 +218,7 @@ export default function ReportsPage() {
                                         {/* Type */}
                                         <div className="flex justify-between md:block col-span-1">
                                             <span className="md:hidden text-xs text-gray-500 font-medium">Tip</span>
-                                            <span className={`text-sm font-medium ${report.type === 'Missing' ? 'text-orange-600' : 'text-red-600'}`}>
+                                            <span className={`text-base font-semibold ${report.type === 'Missing' ? 'text-orange-600' : 'text-red-600'}`}>
                                                 {report.type === 'Missing' ? 'Eksik Ürün' : 'Hasarlı Ürün'}
                                             </span>
                                         </div>
@@ -235,7 +235,7 @@ export default function ReportsPage() {
                                         <div className="flex justify-between md:block md:text-right col-span-1">
                                             <span className="md:hidden text-xs text-gray-500 font-medium">Son İşlem</span>
                                             <div className="flex flex-col md:items-end">
-                                                <span className="text-xs font-medium text-gray-900">
+                                                <span className="text-sm font-bold text-gray-900">
                                                     {report.lastActionType === 'CREATED' ? 'Oluşturuldu' :
                                                         report.lastActionType === 'UPDATED' ? 'Güncellendi' :
                                                             report.lastActionType === 'SENT' ? 'Gönderildi' :
@@ -243,7 +243,7 @@ export default function ReportsPage() {
                                                                     report.lastActionType === 'REJECTED' ? 'Reddedildi' :
                                                                         report.lastActionType === 'CLOSED' ? 'Kapatıldı' : report.lastActionType}
                                                 </span>
-                                                <span className="text-[10px] text-gray-400">
+                                                <span className="text-xs text-gray-500">
                                                     {new Date(report.lastActionTime).toLocaleDateString('tr-TR', {
                                                         day: 'numeric',
                                                         month: 'short',
