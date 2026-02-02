@@ -41,6 +41,23 @@ export interface RecentActivity {
     timestamp: string;
 }
 
+export interface AdminReport {
+    id: number;
+    reportNo: string;
+    storeCode: string;
+    type: string;
+    status: string;
+    tplNo: string;
+    waybillNo?: string;
+    createdAt: string;
+    createdBy: string;
+    itemCount: number;
+}
+
+export interface UpdateReportStatusRequest {
+    status: string;
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5279';
 
 async function fetchAPI(endpoint: string, options: RequestInit = {}) {
@@ -101,6 +118,24 @@ export const adminAPI = {
         return fetchAPI('/api/admin/business-hours', {
             method: 'PUT',
             body: JSON.stringify(data),
+        });
+    },
+
+    // Reports Management
+    async getReports(params?: { status?: string; storeCode?: string; q?: string }): Promise<AdminReport[]> {
+        const query = new URLSearchParams();
+        if (params?.status) query.append('status', params.status);
+        if (params?.storeCode) query.append('storeCode', params.storeCode);
+        if (params?.q) query.append('q', params.q);
+
+        const queryString = query.toString();
+        return fetchAPI(`/api/admin/reports${queryString ? `?${queryString}` : ''}`);
+    },
+
+    async updateReportStatus(id: number, status: string): Promise<{ message: string; status: string }> {
+        return fetchAPI(`/api/admin/reports/${id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status }),
         });
     },
 };

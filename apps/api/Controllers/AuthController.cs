@@ -260,7 +260,8 @@ public class AuthController : ControllerBase
         var role = User.FindFirstValue(ClaimTypes.Role)!;
         var storeCode = User.FindFirstValue("StoreCode");
 
-        var userDto = new UserDto(userId, email, role, displayName, storeCode);
+        var isAdmin = role == "Admin" || role == "0";
+        var userDto = new UserDto(userId, email, role, displayName, storeCode, null, isAdmin);
         return Ok(userDto);
     }
 
