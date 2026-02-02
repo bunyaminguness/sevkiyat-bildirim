@@ -239,4 +239,84 @@ public class AdminController : ControllerBase
             currentConfig = GetBusinessHours()
         });
     }
+
+    /// <summary>
+    /// Get all reports with filtering (admin only)
+    /// </summary>
+    [HttpGet("reports")]
+    public async Task<IActionResult> GetReports(
+        [FromQuery] string? status,
+        [FromQuery] string? storeCode,
+        [FromQuery] string? q)
+    {
+        var query = _context.Reports.AsQueryable();
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            if (Enum.TryParse<ReportStatus>(status, true, out var statusEnum))
+            {
+                query = query.Where(r => r.Status == statusEnum);
+            }
+        }
+
+        if (!string.IsNullOrEmpty(storeCode))
+        {
+            query = query.Where(r => r.StoreCode.Contains(storeCode));
+        }
+
+        if (!string.IsNullOrEmpty(q))
+        {
+            query = query.Where(r => 
+                r.ReportNo.Contains(q) || 
+                r.TplNo.Contains(q) ||
+                r.Notes!.Contains(q));
+        }
+
+        var reports = await query
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(100)
+            .Select(r => new
+            {
+                r.Id,
+                r.ReportNo,
+                r.StoreCode,
+                r.Type,
+                Status = r.Status.ToString(),
+                r.TplNo,
+                r.WaybillNo,
+                r.CreatedAt,
+                CreatedBy = r.CreatedBy.DisplayName,
+                ItemCount = r.Items.Count
+            })
+            .ToListAsync();
+
+        return Ok(reports);
+    }
+
+    /// <summary>
+    /// Update report status (admin only)
+    /// </summary>
+    [HttpPatch("reports/{id}/status")]
+    public async Task<IActionResult> UpdateReportStatus(int id, [FromBody] UpdateReportStatusRequest request)
+    {
+        var report = await _context.Reports.FindAsync(id);
+        if (report == null)
+        {
+            return NotFound(new { message = "Rapor bulunamadı." });
+        }
+
+        if (!Enum.TryParse<ReportStatus>(request.Status, true, out var newStatus))
+        {
+            return BadRequest(new { message = "Geçersiz durum." });
+        }
+
+        report.Status = newStatus;
+        report.UpdatedAt = DateTime.UtcNow;
+        
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Admin updated report {ReportNo} status to {Status}", report.ReportNo, newStatus);
+
+        return Ok(new { message = "Rapor durumu güncellendi.", status = newStatus.ToString() });
+    }
 }
