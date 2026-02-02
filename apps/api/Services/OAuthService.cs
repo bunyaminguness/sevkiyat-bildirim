@@ -86,6 +86,7 @@ public class OAuthService : IOAuthService
 
             // Generate JWT token
             var token = _authService.GenerateJwtToken(user);
+            var isAdmin = user.Role == "Admin" || user.Role == "0";
 
             return new LoginResponse(
                 new UserDto(
@@ -94,7 +95,8 @@ public class OAuthService : IOAuthService
                     user.Role,
                     user.DisplayName,
                     user.StoreCode,
-                    user.ProfileImageUrl
+                    user.ProfileImageUrl,
+                    isAdmin
                 ),
                 token
             );
@@ -162,6 +164,7 @@ public class OAuthService : IOAuthService
 
             // Generate JWT token
             var token = _authService.GenerateJwtToken(user);
+            var isAdminExisting = user.Role == "Admin" || user.Role == "0";
 
             return new LoginResponse(
                 new UserDto(
@@ -170,7 +173,8 @@ public class OAuthService : IOAuthService
                     user.Role,
                     user.DisplayName,
                     user.StoreCode,
-                    user.ProfileImageUrl
+                    user.ProfileImageUrl,
+                    isAdminExisting
                 ),
                 token
             );
@@ -207,6 +211,7 @@ public class OAuthService : IOAuthService
 
             // Generate JWT token
             var token = _authService.GenerateJwtToken(user);
+            var isAdminMicrosoft = user.Role == "Admin" || user.Role == "0";
 
             return new LoginResponse(
                 new UserDto(
@@ -215,7 +220,8 @@ public class OAuthService : IOAuthService
                     user.Role,
                     user.DisplayName,
                     user.StoreCode,
-                    user.ProfileImageUrl
+                    user.ProfileImageUrl,
+                    isAdminMicrosoft
                 ),
                 token
             );
