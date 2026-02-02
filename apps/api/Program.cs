@@ -150,6 +150,24 @@ if (app.Environment.IsDevelopment())
     {
         app.Logger.LogError(ex, "An error occurred while seeding allowed users");
     }
+
+    // Update gunesbunyamin004@gmail.com to Admin role
+    try
+    {
+        var gunesUser = await dbContext.AllowedUsers
+            .FirstOrDefaultAsync(au => au.Email == "gunesbunyamin004@gmail.com");
+        
+        if (gunesUser != null && gunesUser.Role != SevkiyatBildirimApi.Models.UserRole.Admin)
+        {
+            gunesUser.Role = SevkiyatBildirimApi.Models.UserRole.Admin;
+            await dbContext.SaveChangesAsync();
+            app.Logger.LogInformation("Updated gunesbunyamin004@gmail.com to Admin role");
+        }
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "An error occurred while updating user role");
+    }
 }
 
 app.Run();
