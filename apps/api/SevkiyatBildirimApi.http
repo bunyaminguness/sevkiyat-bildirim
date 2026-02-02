@@ -1,0 +1,6 @@
+@SevkiyatBildirimApi_HostAddress = http://localhost:5279
+
+GET {{SevkiyatBildirimApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

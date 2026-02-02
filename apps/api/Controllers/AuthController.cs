@@ -36,32 +36,39 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var (user, token) = await _authService.LoginAsync(request.Email, request.Password);
-        
-        if (user == null || token == null)
+        try
         {
-            return Unauthorized(new { message_tr = "Email veya şifre hatalı" });
+            var (user, token) = await _authService.LoginAsync(request.Email, request.Password);
+            
+            if (user == null || token == null)
+            {
+                return Unauthorized(new { message_tr = "Email veya şifre hatalı" });
+            }
+
+            // Set httpOnly cookie
+            Response.Cookies.Append("auth_token", token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !_env.IsDevelopment(), // false in dev (HTTP), true in prod (HTTPS)
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddDays(7)
+            });
+
+            var userDto = new UserDto(
+                user.Id,
+                user.Email,
+                user.Role,
+                user.DisplayName,
+                user.StoreCode,
+                user.ProfileImageUrl
+            );
+
+            return Ok(new LoginResponse(userDto, token));
         }
-
-        // Set httpOnly cookie
-        Response.Cookies.Append("auth_token", token, new CookieOptions
+        catch (UnauthorizedAccessException ex)
         {
-            HttpOnly = true,
-            Secure = !_env.IsDevelopment(), // false in dev (HTTP), true in prod (HTTPS)
-            SameSite = SameSiteMode.Strict,
-            Expires = DateTimeOffset.UtcNow.AddDays(7)
-        });
-
-        var userDto = new UserDto(
-            user.Id,
-            user.Email,
-            user.Role,
-            user.DisplayName,
-            user.StoreCode,
-            user.ProfileImageUrl
-        );
-
-        return Ok(new LoginResponse(userDto, token));
+            return StatusCode(403, new { code = "not_allowed", message_tr = ex.Message });
+        }
     }
 
     [HttpGet("google")]

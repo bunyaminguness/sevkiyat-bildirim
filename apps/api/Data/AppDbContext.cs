@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<ReportAction> ReportActions => Set<ReportAction>();
     public DbSet<EmailLog> EmailLogs => Set<EmailLog>();
     public DbSet<MagicLinkToken> MagicLinkTokens => Set<MagicLinkToken>();
+    public DbSet<AllowedUser> AllowedUsers => Set<AllowedUser>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -117,6 +118,17 @@ public class AppDbContext : DbContext
             
             entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Token).IsRequired().HasMaxLength(100);
+        });
+
+        // AllowedUser configuration
+        modelBuilder.Entity<AllowedUser>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Email).IsUnique();
+            
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Role).IsRequired();
+            entity.Property(e => e.StoreCode).HasMaxLength(50);
         });
 
         // Seed data
