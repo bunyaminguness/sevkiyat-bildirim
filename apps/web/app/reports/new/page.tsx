@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { EmailPreviewPanel } from '@/components/EmailPreviewPanel';
+import { BusinessHoursBanner } from '@/components/BusinessHoursBanner';
 import { buildEmailPreview } from '@/utils/email-preview';
+import { getSystemStatus, SystemStatus } from '@/lib/system-api';
 
 interface ReportItem {
     productNo: string;
@@ -31,6 +33,10 @@ export default function NewReportPage() {
     const [loadingAction, setLoadingAction] = useState<'draft' | 'send' | null>(null);
     const [validationErrors, setValidationErrors] = useState<ValidationErrors>({ general: [], fields: {} });
     const [successMessage, setSuccessMessage] = useState('');
+
+    // Business Hours State
+    const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+    const [isWithinBusinessHours, setIsWithinBusinessHours] = useState(true);
 
     // Form Data
     const [formData, setFormData] = useState({
@@ -74,6 +80,29 @@ export default function NewReportPage() {
             }
         }
         fetchRecipients();
+    }, []);
+
+    // Fetch Business Hours Status
+    useEffect(() => {
+        async function checkBusinessHours() {
+            try {
+                const status = await getSystemStatus();
+                setSystemStatus(status);
+                setIsWithinBusinessHours(status.isWithinBusinessHours);
+            } catch (err) {
+                console.error('Failed to fetch system status', err);
+                // On error, assume within hours (fail open for UX)
+                setIsWithinBusinessHours(true);
+            }
+        }
+
+        // Initial fetch
+        checkBusinessHours();
+
+        // Poll every 60 seconds
+        const interval = setInterval(checkBusinessHours, 60000);
+
+        return () => clearInterval(interval);
     }, []);
 
     // Handle Recipient Change
@@ -198,6 +227,26 @@ export default function NewReportPage() {
             }
 
             if (!res.ok) {
+                // Check for business hours error
+                if (res.status === 403) {
+                    try {
+                        const errData = await res.json();
+                        if (errData.code === 'outside_business_hours') {
+                            // Update state to show banner
+                            setIsWithinBusinessHours(false);
+                            if (errData.businessHours) {
+                                setSystemStatus(prev => prev ? {
+                                    ...prev,
+                                    isWithinBusinessHours: false,
+                                    businessHours: errData.businessHours
+                                } : null);
+                            }
+                            throw new Error(errData.message || 'Kullanım saatleri dışında işlem yapılamaz.');
+                        }
+                    } catch (jsonErr) {
+                        throw new Error('Erişim engellendi.');
+                    }
+                }
                 const errData = await res.json();
                 throw new Error(errData.message_tr || 'Taslak kaydedilemedi.');
             }
@@ -246,6 +295,25 @@ export default function NewReportPage() {
             }
 
             if (!createRes.ok) {
+                // Check for business hours error
+                if (createRes.status === 403) {
+                    try {
+                        const errData = await createRes.json();
+                        if (errData.code === 'outside_business_hours') {
+                            setIsWithinBusinessHours(false);
+                            if (errData.businessHours) {
+                                setSystemStatus(prev => prev ? {
+                                    ...prev,
+                                    isWithinBusinessHours: false,
+                                    businessHours: errData.businessHours
+                                } : null);
+                            }
+                            throw new Error(errData.message || 'Kullanım saatleri dışında işlem yapılamaz.');
+                        }
+                    } catch (jsonErr) {
+                        throw new Error('Erişim engellendi.');
+                    }
+                }
                 const errData = await createRes.json();
                 throw new Error(errData.message_tr || 'Rapor oluşturulamadı.');
             }
@@ -261,10 +329,33 @@ export default function NewReportPage() {
                 body: JSON.stringify({ sendViaSmtp: true }),
             });
 
+            if (sendRes.status === 401) {
+                router.push('/login?error=session_expired');
+                return;
+            }
+
             if (!sendRes.ok) {
+                // Check for business hours error on send
+                if (sendRes.status === 403) {
+                    try {
+                        const errData = await sendRes.json();
+                        if (errData.code === 'outside_business_hours') {
+                            setIsWithinBusinessHours(false);
+                            if (errData.businessHours) {
+                                setSystemStatus(prev => prev ? {
+                                    ...prev,
+                                    isWithinBusinessHours: false,
+                                    businessHours: errData.businessHours
+                                } : null);
+                            }
+                            throw new Error(errData.message || 'Kullanım saatleri dışında işlem yapılamaz.');
+                        }
+                    } catch (jsonErr) {
+                        throw new Error('Erişim engellendi.');
+                    }
+                }
                 const errData = await sendRes.json();
-                // If send fails, report is still created as draft. Notify user.
-                throw new Error(errData.message_tr || `Rapor taslak olarak kaydedildi ancak email gönderilemedi.`);
+                throw new Error(errData.message_tr || 'Email gönderilemedi.');
             }
 
             setSuccessMessage(`Email gönderildi ve bildirim kaydedildi! ✅`);
@@ -312,6 +403,11 @@ export default function NewReportPage() {
                     </button>
                     <h1 className="text-4xl font-bold text-gray-900">Yeni Bildirim Oluştur</h1>
                 </div>
+
+                {/* Business Hours Banner */}
+                {!isWithinBusinessHours && systemStatus?.businessHours && (
+                    <BusinessHoursBanner businessHours={systemStatus.businessHours} />
+                )}
 
                 {/* Feedback Banners */}
                 {validationErrors.general.length > 0 && (
@@ -552,7 +648,8 @@ export default function NewReportPage() {
                             <button
                                 type="button"
                                 onClick={handleSaveDraft}
-                                disabled={loading}
+                                disabled={loading || !isWithinBusinessHours}
+                                title={!isWithinBusinessHours ? 'İşlem saat 09:00–18:00 arasında yapılabilir.' : ''}
                                 className={`flex-1 px-8 py-4 rounded-xl font-bold text-xl transition shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed ${loadingAction === 'draft' ? 'bg-gray-700 text-white' : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50'}`}
                             >
                                 {loadingAction === 'draft' ? '⏳ Kaydediliyor...' : '💾 Taslak Olarak Kaydet'}
@@ -560,7 +657,8 @@ export default function NewReportPage() {
                             <button
                                 type="button"
                                 onClick={handleSaveAndSend}
-                                disabled={loading}
+                                disabled={loading || !isWithinBusinessHours}
+                                title={!isWithinBusinessHours ? 'İşlem saat 09:00–18:00 arasında yapılabilir.' : ''}
                                 className={`flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-xl font-bold text-xl hover:from-blue-700 hover:to-blue-800 transition shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed ${loadingAction === 'send' ? 'opacity-90' : ''}`}
                             >
                                 {loadingAction === 'send' ? '⏳ Gönderiliyor...' : '📧 Kaydet ve Email Gönder'}

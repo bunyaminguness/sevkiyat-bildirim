@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SevkiyatBildirimApi.DTOs;
 using SevkiyatBildirimApi.Services;
 using SevkiyatBildirimApi.Models;
+using SevkiyatBildirimApi.Middleware;
 using System.Security.Claims;
 
 namespace SevkiyatBildirimApi.Controllers;
@@ -47,6 +48,7 @@ public class ReportsController : ControllerBase
     }
 
     [HttpPost]
+    [BusinessHours]
     public async Task<IActionResult> CreateReport([FromBody] CreateReportRequest request)
     {
         try
@@ -140,6 +142,7 @@ public class ReportsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [BusinessHours]
     public async Task<IActionResult> UpdateReport(int id, [FromBody] UpdateReportRequest request)
     {
         try
@@ -154,6 +157,7 @@ public class ReportsController : ControllerBase
     }
 
     [HttpPost("{id}/send")]
+    [BusinessHours]
     public async Task<IActionResult> SendReport(int id, [FromBody] SendEmailRequest? request = null)
     {
         try
@@ -169,6 +173,7 @@ public class ReportsController : ControllerBase
     }
 
     [HttpPost("{id}/accept")]
+    [BusinessHours]
     public async Task<IActionResult> AcceptReport(int id)
     {
         try
@@ -183,6 +188,7 @@ public class ReportsController : ControllerBase
     }
 
     [HttpPost("{id}/reject")]
+    [BusinessHours]
     public async Task<IActionResult> RejectReport(int id, [FromBody] RejectReportRequest request)
     {
         try
@@ -197,6 +203,7 @@ public class ReportsController : ControllerBase
     }
 
     [HttpPost("{id}/revise-resend")]
+    [BusinessHours]
     public async Task<IActionResult> ReviseAndResend(int id, [FromBody] SendEmailRequest? request = null)
     {
         try
@@ -212,6 +219,7 @@ public class ReportsController : ControllerBase
     }
 
     [HttpPost("{id}/close")]
+    [BusinessHours]
     public async Task<IActionResult> CloseReport(int id)
     {
         try
