@@ -23,7 +23,8 @@ public class AdminOnlyAttribute : ActionFilterAttribute
             return;
         }
 
-        var roleClaim = user.FindFirst("role")?.Value;
+        // Use ClaimTypes.Role to match JWT token generation in AuthService
+        var roleClaim = user.FindFirst(ClaimTypes.Role)?.Value;
         
         // Check if role is Admin (0)
         if (roleClaim != "Admin" && roleClaim != "0")

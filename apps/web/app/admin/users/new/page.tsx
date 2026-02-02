@@ -63,7 +63,7 @@ export default function NewUserPage() {
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-300 focus:border-blue-500"
+                        className="w-full px-4 py-3 text-base font-bold text-gray-900 border-2 border-gray-400 rounded-lg focus:ring-4 focus:ring-blue-300 focus:border-blue-500 bg-white placeholder:text-gray-400 placeholder:font-normal"
                         placeholder="ornek@email.com"
                     />
                 </div>
@@ -76,7 +76,7 @@ export default function NewUserPage() {
                     <select
                         value={formData.role}
                         onChange={(e) => setFormData({ ...formData, role: parseInt(e.target.value) })}
-                        className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-300 focus:border-blue-500"
+                        className="w-full px-4 py-3 text-base font-bold text-gray-900 border-2 border-gray-400 rounded-lg focus:ring-4 focus:ring-blue-300 focus:border-blue-500 bg-white"
                     >
                         <option value={0}>Admin - Tüm yetkiler</option>
                         <option value={1}>Manager - Rapor yönetimi</option>
@@ -98,7 +98,7 @@ export default function NewUserPage() {
                         type="text"
                         value={formData.storeCode}
                         onChange={(e) => setFormData({ ...formData, storeCode: e.target.value })}
-                        className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-300 focus:border-blue-500"
+                        className="w-full px-4 py-3 text-base font-bold text-gray-900 border-2 border-gray-400 rounded-lg focus:ring-4 focus:ring-blue-300 focus:border-blue-500 bg-white placeholder:text-gray-400 placeholder:font-normal"
                         placeholder="Opsiyonel"
                     />
                 </div>

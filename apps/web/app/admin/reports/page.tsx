@@ -65,7 +65,7 @@ export default function AdminReportsPage() {
         };
 
         return (
-            <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${styles[status] || 'bg-gray-50 text-gray-600 ring-gray-500/10'}`}>
+            <span className={`inline-flex items-center rounded-md px-3 py-1.5 text-sm font-bold ring-1 ring-inset ${styles[status] || 'bg-gray-50 text-gray-600 ring-gray-500/10'}`}>
                 {labels[status] || status}
             </span>
         );
@@ -96,7 +96,7 @@ export default function AdminReportsPage() {
                         <select
                             value={filters.status}
                             onChange={(e) => handleFilterChange('status', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 text-base font-bold text-gray-900 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                         >
                             <option value="">Tümü</option>
                             <option value="Draft">Taslak</option>
@@ -114,7 +114,7 @@ export default function AdminReportsPage() {
                             value={filters.storeCode}
                             onChange={(e) => handleFilterChange('storeCode', e.target.value)}
                             placeholder="örn: 001"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 text-base font-bold text-gray-900 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white placeholder:text-gray-400 placeholder:font-normal"
                         />
                     </div>
 
@@ -125,7 +125,7 @@ export default function AdminReportsPage() {
                             value={filters.q}
                             onChange={(e) => handleFilterChange('q', e.target.value)}
                             placeholder="Rapor No, TPL, vb."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 text-base font-bold text-gray-900 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white placeholder:text-gray-400 placeholder:font-normal"
                         />
                     </div>
 
@@ -151,28 +151,28 @@ export default function AdminReportsPage() {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                                 Rapor No
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                                 Mağaza
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                                 TPL No
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                                 Tip
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                                 Durum
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                                 Oluşturan
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                                 Tarih
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
                                 İşlem
                             </th>
                         </tr>
@@ -187,34 +187,34 @@ export default function AdminReportsPage() {
                         ) : (
                             reports.map((report) => (
                                 <tr key={report.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 font-mono">
+                                    <td className="px-6 py-4 whitespace-nowrap text-base font-semibold text-gray-900 font-mono">
                                         {report.reportNo}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-6 py-4 whitespace-nowrap text-base font-semibold text-gray-900">
                                         {report.storeCode}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                                    <td className="px-6 py-4 whitespace-nowrap text-base text-gray-700 font-mono">
                                         {report.tplNo}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        <span className={report.type === 'Missing' ? 'text-orange-600' : 'text-red-600'}>
+                                    <td className="px-6 py-4 whitespace-nowrap text-base">
+                                        <span className={`font-semibold ${report.type === 'Missing' ? 'text-orange-600' : 'text-red-600'}`}>
                                             {report.type === 'Missing' ? 'Eksik' : 'Hasarlı'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         {getStatusBadge(report.status)}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-6 py-4 whitespace-nowrap text-base text-gray-700">
                                         {report.createdBy}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-6 py-4 whitespace-nowrap text-base text-gray-700">
                                         {new Date(report.createdAt).toLocaleDateString('tr-TR')}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                    <td className="px-6 py-4 whitespace-nowrap">
                                         <select
                                             onChange={(e) => handleStatusChange(report.id, e.target.value)}
                                             value={report.status}
-                                            className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="text-base font-bold text-gray-900 border-2 border-gray-400 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                                         >
                                             <option value="Draft">Taslak</option>
                                             <option value="Sent">Gönderildi</option>
