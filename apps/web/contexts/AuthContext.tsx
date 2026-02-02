@@ -77,3 +77,8 @@ export function useAuth() {
     }
     return context;
 }
+
+// Wrapper component for use in server components
+export function ClientAuthProvider({ children }: { children: React.ReactNode }) {
+    return <AuthProvider>{children}</AuthProvider>;
+}
