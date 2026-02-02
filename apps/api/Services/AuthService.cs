@@ -38,6 +38,16 @@ public class AuthService : IAuthService
             return (null, null);
         }
 
+        // Check if user is in allowlist
+        var normalizedEmail = email.ToLowerInvariant();
+        var allowedUser = await _context.AllowedUsers
+            .FirstOrDefaultAsync(au => au.Email == normalizedEmail);
+
+        if (allowedUser == null || !allowedUser.IsActive)
+        {
+            throw new UnauthorizedAccessException("Bu hesaba erişim izni yok. Müdürünüzle iletişime geçin.");
+        }
+
         // Update last login time
         user.LastLoginAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();

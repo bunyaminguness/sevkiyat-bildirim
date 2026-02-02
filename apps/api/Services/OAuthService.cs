@@ -235,6 +235,17 @@ public class OAuthService : IOAuthService
         string? profileImageUrl,
         string? refreshToken = null)
     {
+        // Check if user is in allowlist FIRST
+        var normalizedEmail = email.ToLowerInvariant();
+        var allowedUser = await _context.AllowedUsers
+            .FirstOrDefaultAsync(au => au.Email == normalizedEmail);
+
+        if (allowedUser == null || !allowedUser.IsActive)
+        {
+            _logger.LogWarning("OAuth login attempt for non-allowed email: {Email}", email);
+            throw new UnauthorizedAccessException("Bu hesaba erişim izni yok. Müdürünüzle iletişime geçin.");
+        }
+
         // Try to find user by email first
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Email == email);

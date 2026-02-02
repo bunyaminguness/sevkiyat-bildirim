@@ -67,6 +67,7 @@ builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IReportNumberGenerator, ReportNumberGenerator>();
+builder.Services.AddSingleton<IBusinessHoursService, BusinessHoursService>();
 
 // CORS
 builder.Services.AddCors(options =>
@@ -115,6 +116,39 @@ if (app.Environment.IsDevelopment())
     catch (Exception ex)
     {
         app.Logger.LogError(ex, "An error occurred while migrating the database");
+    }
+
+    // Seed allowed users from configuration
+    try
+    {
+        var adminEmails = builder.Configuration.GetSection("AllowedUsers:AdminEmails").Get<string[]>();
+        if (adminEmails != null && adminEmails.Length > 0)
+        {
+            foreach (var email in adminEmails)
+            {
+                var normalizedEmail = email.ToLowerInvariant();
+                var existingAllowedUser = await dbContext.AllowedUsers
+                    .FirstOrDefaultAsync(au => au.Email == normalizedEmail);
+
+                if (existingAllowedUser == null)
+                {
+                    dbContext.AllowedUsers.Add(new SevkiyatBildirimApi.Models.AllowedUser
+                    {
+                        Id = Guid.NewGuid(),
+                        Email = normalizedEmail,
+                        Role = SevkiyatBildirimApi.Models.UserRole.Admin,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                    app.Logger.LogInformation("Seeded admin user: {Email}", email);
+                }
+            }
+            await dbContext.SaveChangesAsync();
+        }
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "An error occurred while seeding allowed users");
     }
 }
 
