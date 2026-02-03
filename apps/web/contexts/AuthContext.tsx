@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getApiUrl } from '@/lib/api-url';
 
 interface User {
     id: number;
@@ -28,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const checkAuth = async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
+            const response = await fetch(`${getApiUrl()}/api/auth/me`, {
                 credentials: 'include',
             });
 
@@ -48,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const logout = () => {
         // Clear cookies by calling logout endpoint
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
+        fetch(`${getApiUrl()}/api/auth/logout`, {
             method: 'POST',
             credentials: 'include',
         }).finally(() => {

@@ -3,12 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminAPI, type AllowedUser } from '@/lib/admin-api';
+import { SetPasswordDialog } from '@/components/admin/SetPasswordDialog';
 
 export default function UsersPage() {
     const router = useRouter();
     const [users, setUsers] = useState<AllowedUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
+    // Set Password Dialog State
+    const [passwordDialoUser, setPasswordDialogUser] = useState<string | null>(null);
 
     useEffect(() => {
         loadUsers();
@@ -120,8 +124,8 @@ export default function UsersPage() {
                                     <button
                                         onClick={() => handleToggleActive(user)}
                                         className={`px-3 py-1 rounded-full text-xs font-bold ${user.isActive
-                                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                            ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                                             }`}
                                     >
                                         {user.isActive ? '✓ Aktif' : '✗ Pasif'}
@@ -131,6 +135,17 @@ export default function UsersPage() {
                                     {new Date(user.createdAt).toLocaleDateString('tr-TR')}
                                 </td>
                                 <td className="px-6 py-4 text-right space-x-2">
+                                    <button
+                                        onClick={() => setPasswordDialogUser(user.email)}
+                                        className="p-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition"
+                                        title="Şifre Tanımla"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <circle cx="7.5" cy="15.5" r="5.5" />
+                                            <path d="m21 2-9.6 9.6" />
+                                            <path d="m15.5 7.5 3 3L22 7l-3-3" />
+                                        </svg>
+                                    </button>
                                     <button
                                         onClick={() => handleDelete(user.id, user.email)}
                                         className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium text-sm"
@@ -149,6 +164,12 @@ export default function UsersPage() {
                     </div>
                 )}
             </div>
+
+            <SetPasswordDialog
+                isOpen={!!passwordDialoUser}
+                onClose={() => setPasswordDialogUser(null)}
+                email={passwordDialoUser}
+            />
         </div>
     );
 }
