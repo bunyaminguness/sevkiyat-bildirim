@@ -173,6 +173,7 @@ public class AdminController : ControllerBase
     /// Set user password
     /// </summary>
     [HttpPost("set-user-password")]
+    [HttpPost("users/set-password")] // Legacy support for cached frontends
     public async Task<IActionResult> SetUserPassword([FromBody] SetPasswordRequest request)
     {
         // Check if allowed user exists
