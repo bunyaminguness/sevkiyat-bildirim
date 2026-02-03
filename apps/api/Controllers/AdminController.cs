@@ -172,7 +172,7 @@ public class AdminController : ControllerBase
     /// <summary>
     /// Set user password
     /// </summary>
-    [HttpPost("users/set-password")]
+    [HttpPost("set-user-password")]
     public async Task<IActionResult> SetUserPassword([FromBody] SetPasswordRequest request)
     {
         // Check if allowed user exists
