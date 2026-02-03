@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { getApiUrl } from '@/lib/api-url';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ERROR_MESSAGES: Record<string, string> = {
     'google_oauth_failed': 'Google ile giriş başarısız oldu',
@@ -20,6 +21,7 @@ function LoginForm() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const { checkAuth } = useAuth();
 
     // Check for OAuth errors in URL
     useEffect(() => {
@@ -36,6 +38,7 @@ function LoginForm() {
 
         try {
             await apiClient.login(email, password);
+            await checkAuth(); // Update global auth state before redirecting
             router.push('/reports');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Giriş başarısız');
