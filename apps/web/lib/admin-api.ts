@@ -105,7 +105,7 @@ export const adminAPI = {
     },
 
     async setPassword(email: string, password: string): Promise<void> {
-        return fetchAPI('/api/admin/users/set-password', {
+        return fetchAPI('/api/admin/set-user-password', {
             method: 'POST',
             body: JSON.stringify({ email, password }),
         });
