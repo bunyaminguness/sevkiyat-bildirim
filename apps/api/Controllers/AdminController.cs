@@ -160,15 +160,57 @@ public class AdminController : ControllerBase
         var user = await _context.AllowedUsers.FindAsync(id);
         if (user == null)
         {
-            return NotFound(new { message = "Kullanıcı bulunamadı." });
+            return NotFound(new { message_tr = "Kullanıcı bulunamadı" });
         }
 
         _context.AllowedUsers.Remove(user);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Admin deleted allowed user: {Email}", user.Email);
+        return Ok(new { message_tr = "Kullanıcı başarıyla silindi" });
+    }
 
-        return Ok(new { message = "Kullanıcı silindi." });
+    /// <summary>
+    /// Set user password
+    /// </summary>
+    [HttpPost("users/set-password")]
+    public async Task<IActionResult> SetUserPassword([FromBody] SetPasswordRequest request)
+    {
+        // Check if allowed user exists
+        var normalizedEmail = request.Email.ToLowerInvariant();
+        var allowedUser = await _context.AllowedUsers
+            .FirstOrDefaultAsync(au => au.Email == normalizedEmail);
+
+        if (allowedUser == null)
+        {
+            return NotFound(new { message = "Bu email adresi izin verilen kullanıcılar listesinde yok" });
+        }
+
+        // Check if actual user exists
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+
+        if (user == null)
+        {
+            // Create user if not exists
+            user = new User
+            {
+                Email = normalizedEmail,
+                Role = allowedUser.Role.ToString(),
+                StoreCode = allowedUser.StoreCode,
+                DisplayName = normalizedEmail.Split('@')[0], // Default display name
+                Provider = AuthProvider.Local,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.Users.Add(user);
+        }
+
+        // Set password
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+        
+        await _context.SaveChangesAsync();
+        
+        _logger.LogInformation("Password set for user: {Email}", normalizedEmail);
+
+        return Ok(new { message = "Şifre başarıyla güncellendi" });
     }
 
     /// <summary>
