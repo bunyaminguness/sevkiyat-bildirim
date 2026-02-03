@@ -50,7 +50,7 @@ public class AuthController : ControllerBase
             {
                 HttpOnly = true,
                 Secure = !_env.IsDevelopment(), // false in dev (HTTP), true in prod (HTTPS)
-                SameSite = SameSiteMode.Strict,
+                SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None, // None required for cross-site in prod
                 Expires = DateTimeOffset.UtcNow.AddDays(7)
             });
 
@@ -95,7 +95,12 @@ public class AuthController : ControllerBase
                 Expires = DateTimeOffset.UtcNow.AddMinutes(10)
             });
 
-            var redirectUri = $"{Request.Scheme}://{Request.Host}/api/auth/google/callback";
+            // Use configured base URL for OAuth redirect (production) or fallback to request URL (development)
+            var oauthBase = _configuration["Auth:OAuthRedirectBaseUrl"];
+            var redirectUri = !string.IsNullOrEmpty(oauthBase) 
+                ? $"{oauthBase}/api/auth/google/callback"
+                : $"{Request.Scheme}://{Request.Host}/api/auth/google/callback";
+            
             var scope = Uri.EscapeDataString("openid email profile https://www.googleapis.com/auth/gmail.send");
             
             var googleAuthUrl = $"https://accounts.google.com/o/oauth2/v2/auth" +
@@ -126,7 +131,8 @@ public class AuthController : ControllerBase
             if (!string.IsNullOrEmpty(error))
             {
                 _logger.LogWarning("Google OAuth error: {Error}", error);
-                var frontendUrl = _configuration["Auth:FrontendBaseUrl"] ?? "http://localhost:3000";
+                var frontendUrl = _configuration["Auth:FrontendBaseUrl"] 
+                    ?? throw new InvalidOperationException("Auth:FrontendBaseUrl configuration is required");
                 return Redirect($"{frontendUrl}/login?error=google_oauth_failed");
             }
 
@@ -135,7 +141,8 @@ public class AuthController : ControllerBase
             if (string.IsNullOrEmpty(storedState) || storedState != state)
             {
                 _logger.LogWarning("OAuth state mismatch. Stored: {Stored}, Received: {Received}", storedState, state);
-                var frontendUrl = _configuration["Auth:FrontendBaseUrl"] ?? "http://localhost:3000";
+                var frontendUrl = _configuration["Auth:FrontendBaseUrl"] 
+                    ?? throw new InvalidOperationException("Auth:FrontendBaseUrl configuration is required");
                 return Redirect($"{frontendUrl}/login?error=invalid_state");
             }
 
@@ -145,7 +152,8 @@ public class AuthController : ControllerBase
             if (string.IsNullOrEmpty(code))
             {
                 _logger.LogWarning("No authorization code received from Google");
-                var frontendUrl = _configuration["Auth:FrontendBaseUrl"] ?? "http://localhost:3000";
+                var frontendUrl = _configuration["Auth:FrontendBaseUrl"] 
+                    ?? throw new InvalidOperationException("Auth:FrontendBaseUrl configuration is required");
                 return Redirect($"{frontendUrl}/login?error=no_code");
             }
 
@@ -157,25 +165,28 @@ public class AuthController : ControllerBase
             {
                 HttpOnly = true,
                 Secure = !_env.IsDevelopment(), // false in dev (HTTP), true in prod (HTTPS)
-                SameSite = SameSiteMode.Strict,
+                SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None, // None required for cross-site in prod
                 Expires = DateTimeOffset.UtcNow.AddDays(7)
             });
 
             // Redirect to frontend
-            var successUrl = _configuration["Auth:FrontendBaseUrl"] ?? "http://localhost:3000";
+            var successUrl = _configuration["Auth:FrontendBaseUrl"] 
+                ?? throw new InvalidOperationException("Auth:FrontendBaseUrl configuration is required");
             _logger.LogInformation("Google OAuth successful for user {Email}, redirecting to {Url}", response.User.Email, successUrl);
             return Redirect($"{successUrl}/reports");
         }
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, "Google OAuth callback failed: Unauthorized");
-            var frontendUrl = _configuration["Auth:FrontendBaseUrl"] ?? "http://localhost:3000";
+            var frontendUrl = _configuration["Auth:FrontendBaseUrl"] 
+                ?? throw new InvalidOperationException("Auth:FrontendBaseUrl configuration is required");
             return Redirect($"{frontendUrl}/login?error=unauthorized");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in Google OAuth callback");
-            var frontendUrl = _configuration["Auth:FrontendBaseUrl"] ?? "http://localhost:3000";
+            var frontendUrl = _configuration["Auth:FrontendBaseUrl"] 
+                ?? throw new InvalidOperationException("Auth:FrontendBaseUrl configuration is required");
             return Redirect($"{frontendUrl}/login?error=server_error");
         }
     }
@@ -192,7 +203,7 @@ public class AuthController : ControllerBase
             {
                 HttpOnly = true,
                 Secure = !_env.IsDevelopment(), // false in dev (HTTP), true in prod (HTTPS)
-                SameSite = SameSiteMode.Strict,
+                SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None, // None required for cross-site in prod
                 Expires = DateTimeOffset.UtcNow.AddDays(7)
             });
 
@@ -232,7 +243,7 @@ public class AuthController : ControllerBase
             {
                 HttpOnly = true,
                 Secure = !_env.IsDevelopment(), // false in dev (HTTP), true in prod (HTTPS)
-                SameSite = SameSiteMode.Strict,
+                SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None, // None required for cross-site in prod
                 Expires = DateTimeOffset.UtcNow.AddDays(7)
             });
 
