@@ -1,3 +1,5 @@
+import { getApiUrl } from './api-url';
+
 export interface AllowedUser {
     id: string;
     email: string;
@@ -58,10 +60,8 @@ export interface UpdateReportStatusRequest {
     status: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5279';
-
 async function fetchAPI(endpoint: string, options: RequestInit = {}) {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`${getApiUrl()}${endpoint}`, {
         ...options,
         credentials: 'include',
         headers: {
@@ -72,7 +72,7 @@ async function fetchAPI(endpoint: string, options: RequestInit = {}) {
 
     if (!response.ok) {
         const error = await response.json().catch(() => ({ message: 'Bir hata oluştu' }));
-        throw new Error(error.message || 'Bir hata oluştu');
+        throw new Error(error.message || error.message_tr || 'Bir hata oluştu');
     }
 
     return response.json();
@@ -101,6 +101,13 @@ export const adminAPI = {
     async deleteUser(id: string): Promise<void> {
         return fetchAPI(`/api/admin/users/${id}`, {
             method: 'DELETE',
+        });
+    },
+
+    async setPassword(email: string, password: string): Promise<void> {
+        return fetchAPI('/api/admin/users/set-password', {
+            method: 'POST',
+            body: JSON.stringify({ email, password }),
         });
     },
 
