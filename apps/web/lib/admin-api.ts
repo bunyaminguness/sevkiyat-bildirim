@@ -20,6 +20,12 @@ export interface UpdateUserRequest {
     isActive?: boolean;
 }
 
+export interface AdminSetPasswordRequest {
+    email: string;
+    password: string;
+    displayName?: string;
+}
+
 export interface BusinessHoursConfig {
     enabled: boolean;
     timeZone: string;
@@ -101,6 +107,13 @@ export const adminAPI = {
     async deleteUser(id: string): Promise<void> {
         return fetchAPI(`/api/admin/users/${id}`, {
             method: 'DELETE',
+        });
+    },
+
+    async setUserPassword(data: AdminSetPasswordRequest): Promise<{ message: string }> {
+        return fetchAPI('/api/admin/users/set-password', {
+            method: 'POST',
+            body: JSON.stringify(data),
         });
     },
 

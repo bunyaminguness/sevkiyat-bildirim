@@ -34,6 +34,13 @@ public class BusinessHoursConfigDto
     public List<string> Days { get; set; } = new();
 }
 
+public class AdminSetPasswordRequest
+{
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public string? DisplayName { get; set; }
+}
+
 public class AdminStatsResponse
 {
     public int TotalUsers { get; set; }
