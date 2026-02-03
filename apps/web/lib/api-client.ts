@@ -1,4 +1,5 @@
 // Types are defined inline below
+import { getApiUrl } from './api-url';
 
 // Auth DTOs
 export interface User {
@@ -141,7 +142,7 @@ class ApiClient {
         endpoint: string,
         options: RequestInit = {}
     ): Promise<T> {
-        const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}${endpoint}`;
+        const url = `${getApiUrl()}${endpoint}`;
         // ... implementation
         const config: RequestInit = {
             ...options,

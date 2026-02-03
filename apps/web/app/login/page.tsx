@@ -1,8 +1,9 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { getApiUrl } from '@/lib/api-url';
 
 const ERROR_MESSAGES: Record<string, string> = {
     'google_oauth_failed': 'Google ile giriş başarısız oldu',
@@ -12,7 +13,7 @@ const ERROR_MESSAGES: Record<string, string> = {
     'server_error': 'Sunucu hatası. Lütfen daha sonra tekrar deneyin'
 };
 
-export default function LoginPage() {
+function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [email, setEmail] = useState('');
@@ -43,7 +44,8 @@ export default function LoginPage() {
         }
     };
 
-    const googleAuthUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`;
+    const googleAuthUrl = `${getApiUrl()}/api/auth/google`;
+
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -153,5 +155,17 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-gray-600">Yükleniyor...</div>
+            </div>
+        }>
+            <LoginForm />
+        </Suspense>
     );
 }
