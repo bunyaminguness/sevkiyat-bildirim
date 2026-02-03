@@ -172,6 +172,76 @@ public class AdminController : ControllerBase
     }
 
     /// <summary>
+    /// Set or reset a user's password (admin only)
+    /// </summary>
+    [HttpPost("users/set-password")]
+    public async Task<IActionResult> SetUserPassword([FromBody] AdminSetPasswordRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            return BadRequest(new { message = "Email adresi zorunludur." });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Password))
+        {
+            return BadRequest(new { message = "Şifre zorunludur." });
+        }
+
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var allowedUser = await _context.AllowedUsers.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+        if (allowedUser == null)
+        {
+            return NotFound(new { message = "Bu email adresi için izin bulunamadı." });
+        }
+
+        if (!allowedUser.IsActive)
+        {
+            return BadRequest(new { message = "Bu kullanıcı pasif durumda." });
+        }
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+        if (user == null)
+        {
+            var displayName = !string.IsNullOrWhiteSpace(request.DisplayName)
+                ? request.DisplayName.Trim()
+                : normalizedEmail.Split('@').FirstOrDefault() ?? normalizedEmail;
+
+            user = new User
+            {
+                Email = normalizedEmail,
+                PasswordHash = passwordHash,
+                DisplayName = displayName,
+                Role = allowedUser.Role.ToString(),
+                StoreCode = allowedUser.StoreCode,
+                Provider = AuthProvider.Local,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Users.Add(user);
+        }
+        else
+        {
+            user.PasswordHash = passwordHash;
+            user.Provider = AuthProvider.Local;
+            user.Role = allowedUser.Role.ToString();
+            user.StoreCode = allowedUser.StoreCode;
+
+            if (!string.IsNullOrWhiteSpace(request.DisplayName))
+            {
+                user.DisplayName = request.DisplayName.Trim();
+            }
+        }
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Admin set password for user: {Email}", normalizedEmail);
+
+        return Ok(new { message = "Şifre güncellendi." });
+    }
+
+    /// <summary>
     /// Get dashboard statistics
     /// </summary>
     [HttpGet("stats")]
