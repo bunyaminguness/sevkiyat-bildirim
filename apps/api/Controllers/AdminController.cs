@@ -107,7 +107,7 @@ public class AdminController : ControllerBase
     /// <summary>
     /// Update allowed user
     /// </summary>
-    [HttpPut("users/{id}")]
+    [HttpPut("users/{id:guid}")]
     public async Task<IActionResult> UpdateAllowedUser(Guid id, [FromBody] UpdateAllowedUserRequest request)
     {
         var user = await _context.AllowedUsers.FindAsync(id);
@@ -154,7 +154,7 @@ public class AdminController : ControllerBase
     /// <summary>
     /// Delete allowed user
     /// </summary>
-    [HttpDelete("users/{id}")]
+    [HttpDelete("users/{id:guid}")]
     public async Task<IActionResult> DeleteAllowedUser(Guid id)
     {
         var user = await _context.AllowedUsers.FindAsync(id);
