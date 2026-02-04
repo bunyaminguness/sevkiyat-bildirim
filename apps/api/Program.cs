@@ -117,8 +117,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Auto-migrate database in development
-if (app.Environment.IsDevelopment())
+// Auto-migrate database in all environments
+// if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
