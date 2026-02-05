@@ -5,11 +5,14 @@ using System.Text;
 
 namespace SevkiyatBildirimApi.Services;
 
+public record EmailAttachment(string FileName, byte[] Content, string ContentType);
+
 public interface IEmailService
 {
     (string Subject, string Body) GenerateEmailContent(Report report);
-    Task<bool> SendEmailAsync(string to, string subject, string body, string? googleRefreshToken = null);
+    Task<bool> SendEmailAsync(string to, string subject, string body, string? googleRefreshToken = null, List<EmailAttachment>? attachments = null);
     Task SendReportEmailAsync(Report report, User? currentUser);
+    Task<List<EmailAttachment>> FetchReportAttachmentsAsync(Report report);
 }
 
 public class EmailService : IEmailService
@@ -17,15 +20,18 @@ public class EmailService : IEmailService
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
     private readonly IEmailTemplateService _emailTemplateService;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public EmailService(
         IConfiguration configuration,
         ILogger<EmailService> logger,
-        IEmailTemplateService emailTemplateService)
+        IEmailTemplateService emailTemplateService,
+        IHttpClientFactory httpClientFactory)
     {
         _configuration = configuration;
         _logger = logger;
         _emailTemplateService = emailTemplateService;
+        _httpClientFactory = httpClientFactory;
     }
 
     public (string Subject, string Body) GenerateEmailContent(Report report)
@@ -33,10 +39,52 @@ public class EmailService : IEmailService
         return (_emailTemplateService.GenerateEmailSubject(report), _emailTemplateService.GenerateEmailBody(report));
     }
 
+    public async Task<List<EmailAttachment>> FetchReportAttachmentsAsync(Report report)
+    {
+        var attachments = new List<EmailAttachment>();
+        if (report.Items == null) return attachments;
+
+        using var client = _httpClientFactory.CreateClient();
+        foreach (var item in report.Items)
+        {
+            if (!string.IsNullOrEmpty(item.PhotoUrl))
+            {
+                try
+                {
+                    var response = await client.GetAsync(item.PhotoUrl);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var content = await response.Content.ReadAsByteArrayAsync();
+                        var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+                        
+                        // Create a meaningful filename
+                        var extension = contentType switch
+                        {
+                            "image/jpeg" => ".jpg",
+                            "image/png" => ".png",
+                            "image/gif" => ".gif",
+                            "application/pdf" => ".pdf",
+                            _ => ""
+                        };
+                        
+                        var fileName = $"urun_{item.ProductNo}{extension}";
+                        attachments.Add(new EmailAttachment(fileName, content, contentType));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to fetch attachment from {Url}", item.PhotoUrl);
+                }
+            }
+        }
+        return attachments;
+    }
+
     public async Task SendReportEmailAsync(Report report, User? currentUser)
     {
         var subject = _emailTemplateService.GenerateEmailSubject(report);
         var body = _emailTemplateService.GenerateEmailBody(report);
+        var attachments = await FetchReportAttachmentsAsync(report);
 
         // Determine recipients
         var toRecipients = new List<string>();
@@ -61,7 +109,7 @@ public class EmailService : IEmailService
         {
             toRecipients.Add(currentUser.Email);
         }
-
+ 
         if (!toRecipients.Any())
         {
             _logger.LogWarning("No recipients found for report {ReportId}", report.Id);
@@ -70,44 +118,33 @@ public class EmailService : IEmailService
 
         var toAddresses = toRecipients.Distinct().ToList();
         
-        // Use the first recipient as primary TO, others could be logic for CC but for now we send individual emails or just TO the first one
-        // Simpler approach: Send to all unique recipients
         foreach (var recipient in toAddresses)
         {
-            // Try Gmail first if user has token (only applies if currentUser is the sender)
-            // But here the "sender" logic is tricky. 
-            // If the current user has a Google Refresh Token, use it.
-            
             string? googleRefreshToken = null;
             if (currentUser != null && !string.IsNullOrEmpty(currentUser.GoogleRefreshToken))
             {
                 googleRefreshToken = currentUser.GoogleRefreshToken;
             }
 
-            await SendEmailAsync(recipient, subject, body, googleRefreshToken);
+            await SendEmailAsync(recipient, subject, body, googleRefreshToken, attachments);
         }
     }
 
-    public async Task<bool> SendEmailAsync(string to, string subject, string body, string? googleRefreshToken = null)
+    public async Task<bool> SendEmailAsync(string to, string subject, string body, string? googleRefreshToken = null, List<EmailAttachment>? attachments = null)
     {
-        // If a refresh token is provided, we MUST try to send via Gmail.
-        // If it fails, we should NOT fall back to SMTP silently, because that causes the "Sender Mismatch" issue.
-        // The user expects the email to come from THEM.
         if (!string.IsNullOrEmpty(googleRefreshToken))
         {
-            var sentViaGmail = await SendViaGmailAsync(to, subject, body, googleRefreshToken);
+            var sentViaGmail = await SendViaGmailAsync(to, subject, body, googleRefreshToken, attachments);
             if (sentViaGmail) return true;
             
-            // If Gmail failed, stop here. Do not fallback.
             _logger.LogWarning("Gmail send failed for user with token. Aborting to avoid sender mismatch.");
             return false; 
         }
 
-        // Only use SMTP if no token was provided (e.g. system emails or non-Google users)
-        return await SendViaSmtpAsync(to, subject, body);
+        return await SendViaSmtpAsync(to, subject, body, attachments);
     }
 
-    private async Task<bool> SendViaGmailAsync(string to, string subject, string body, string refreshToken)
+    private async Task<bool> SendViaGmailAsync(string to, string subject, string body, string refreshToken, List<EmailAttachment>? attachments)
     {
         try
         {
@@ -139,7 +176,6 @@ public class EmailService : IEmailService
                 tokenResponse
             );
 
-            // Force token refresh if needed (handling is partly automatic, but ensure Scope)
             if (credential.Token.IsStale)
             {
                  await credential.RefreshTokenAsync(CancellationToken.None);
@@ -152,7 +188,7 @@ public class EmailService : IEmailService
             });
 
             var msg = new Google.Apis.Gmail.v1.Data.Message();
-            msg.Raw = Base64UrlEncode(CreateMimeMessage(to, subject, body));
+            msg.Raw = Base64UrlEncode(CreateMimeMessage(to, subject, body, attachments));
 
             await service.Users.Messages.Send(msg, "me").ExecuteAsync();
             
@@ -166,7 +202,7 @@ public class EmailService : IEmailService
         }
     }
 
-    private async Task<bool> SendViaSmtpAsync(string to, string subject, string body)
+    private async Task<bool> SendViaSmtpAsync(string to, string subject, string body, List<EmailAttachment>? attachments)
     {
         var smtpEnabled = _configuration.GetValue<bool>("Email:SmtpEnabled");
         if (!smtpEnabled)
@@ -197,6 +233,14 @@ public class EmailService : IEmailService
 
             using var message = new MailMessage(from, to, subject, body);
             
+            if (attachments != null)
+            {
+                foreach (var att in attachments)
+                {
+                    message.Attachments.Add(new Attachment(new MemoryStream(att.Content), att.FileName, att.ContentType));
+                }
+            }
+            
             await smtpClient.SendMailAsync(message);
             _logger.LogInformation("Email sent via SMTP to {To}", to);
             return true;
@@ -208,15 +252,45 @@ public class EmailService : IEmailService
         }
     }
 
-    private string CreateMimeMessage(string to, string subject, string body)
+    private string CreateMimeMessage(string to, string subject, string body, List<EmailAttachment>? attachments)
     {
-        // Simple MIME message construction
-        var message = $"To: {to}\r\n" +
-                      $"Subject: =?utf-8?B?{Convert.ToBase64String(Encoding.UTF8.GetBytes(subject))}?=\r\n" +
-                      "Content-Type: text/plain; charset=utf-8\r\n" +
-                      "\r\n" +
-                      body;
-        return message;
+        if (attachments == null || !attachments.Any())
+        {
+            return $"To: {to}\r\n" +
+                   $"Subject: =?utf-8?B?{Convert.ToBase64String(Encoding.UTF8.GetBytes(subject))}?=\r\n" +
+                   "Content-Type: text/plain; charset=utf-8\r\n" +
+                   "\r\n" +
+                   body;
+        }
+
+        var boundary = Guid.NewGuid().ToString();
+        var sb = new StringBuilder();
+        
+        sb.AppendLine($"To: {to}");
+        sb.AppendLine($"Subject: =?utf-8?B?{Convert.ToBase64String(Encoding.UTF8.GetBytes(subject))}?=");
+        sb.AppendLine($"Content-Type: multipart/mixed; boundary=\"{boundary}\"");
+        sb.AppendLine();
+        
+        sb.AppendLine($"--{boundary}");
+        sb.AppendLine("Content-Type: text/plain; charset=utf-8");
+        sb.AppendLine();
+        sb.AppendLine(body);
+        
+        foreach (var attachment in attachments)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"--{boundary}");
+            sb.AppendLine($"Content-Type: {attachment.ContentType}");
+            sb.AppendLine("Content-Transfer-Encoding: base64");
+            sb.AppendLine($"Content-Disposition: attachment; filename=\"{attachment.FileName}\"");
+            sb.AppendLine();
+            sb.AppendLine(Convert.ToBase64String(attachment.Content));
+        }
+        
+        sb.AppendLine();
+        sb.AppendLine($"--{boundary}--");
+        
+        return sb.ToString();
     }
 
     private string Base64UrlEncode(string input)

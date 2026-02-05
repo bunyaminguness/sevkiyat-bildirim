@@ -11,10 +11,10 @@ public interface IReportService
     Task<ReportDto?> GetReportByIdAsync(int id);
     Task<ReportDto> CreateReportAsync(CreateReportRequest request, int userId, string userName);
     Task<ReportDto> UpdateReportAsync(int id, UpdateReportRequest request, int userId, string userName);
-    Task<SendEmailResponse> SendReportAsync(int id, int userId, string userName, bool sendViaSmtp);
+    Task<SendEmailResponse> SendReportAsync(int id, int userId, string userName, bool sendViaSmtp, List<EmailAttachment>? additionalAttachments = null);
     Task<ReportDto> AcceptReportAsync(int id, int userId, string userName);
     Task<ReportDto> RejectReportAsync(int id, RejectReportRequest request, int userId, string userName);
-    Task<SendEmailResponse> ReviseAndResendAsync(int id, int userId, string userName, bool sendViaSmtp);
+    Task<SendEmailResponse> ReviseAndResendAsync(int id, int userId, string userName, bool sendViaSmtp, List<EmailAttachment>? additionalAttachments = null);
     Task<ReportDto> CloseReportAsync(int id, int userId, string userName);
     PreviewEmailResponse PreviewEmail(CreateReportRequest request);
 }
@@ -146,7 +146,8 @@ public class ReportService : IReportService
                 ProductNo = itemReq.ProductNo,
                 ProductName = itemReq.ProductName,
                 Qty = itemReq.Qty,
-                DamageType = itemReq.DamageType
+                DamageType = itemReq.DamageType,
+                PhotoUrl = itemReq.PhotoUrl
             });
         }
 
@@ -192,7 +193,8 @@ public class ReportService : IReportService
                 ProductNo = itemReq.ProductNo,
                 ProductName = itemReq.ProductName,
                 Qty = itemReq.Qty,
-                DamageType = itemReq.DamageType
+                DamageType = itemReq.DamageType,
+                PhotoUrl = itemReq.PhotoUrl
             });
         }
 
@@ -202,7 +204,7 @@ public class ReportService : IReportService
         return (await GetReportByIdAsync(report.Id))!;
     }
 
-    public async Task<SendEmailResponse> SendReportAsync(int id, int userId, string userName, bool sendViaSmtp)
+    public async Task<SendEmailResponse> SendReportAsync(int id, int userId, string userName, bool sendViaSmtp, List<EmailAttachment>? additionalAttachments = null)
     {
         var report = await _context.Reports
             .Include(r => r.Items)
@@ -247,7 +249,9 @@ public class ReportService : IReportService
             // Requirement: "Never imply it is sending from the user's Gmail [if it is not]"
             // Since we enforced the check above, we expect it to TRY Gmail.
             
-            sent = await _emailService.SendEmailAsync(emailTo.Replace(";", ","), subject, body, googleRefreshToken);
+            var attachments = await _emailService.FetchReportAttachmentsAsync(report);
+            if (additionalAttachments != null) attachments.AddRange(additionalAttachments);
+            sent = await _emailService.SendEmailAsync(emailTo.Replace(";", ","), subject, body, googleRefreshToken, attachments);
             
             // Should we check if it fell back? 
             // EmailService returns true if either worked. 
@@ -355,7 +359,7 @@ public class ReportService : IReportService
         return (await GetReportByIdAsync(report.Id))!;
     }
 
-    public async Task<SendEmailResponse> ReviseAndResendAsync(int id, int userId, string userName, bool sendViaSmtp)
+    public async Task<SendEmailResponse> ReviseAndResendAsync(int id, int userId, string userName, bool sendViaSmtp, List<EmailAttachment>? additionalAttachments = null)
     {
         var report = await _context.Reports
             .Include(r => r.Items)
@@ -381,7 +385,9 @@ public class ReportService : IReportService
         bool sent = false;
         if (sendViaSmtp)
         {
-            sent = await _emailService.SendEmailAsync(emailTo.Replace(";", ","), subject, body, googleRefreshToken);
+            var attachments = await _emailService.FetchReportAttachmentsAsync(report);
+            if (additionalAttachments != null) attachments.AddRange(additionalAttachments);
+            sent = await _emailService.SendEmailAsync(emailTo.Replace(";", ","), subject, body, googleRefreshToken, attachments);
         }
 
         // Log email

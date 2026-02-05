@@ -38,7 +38,18 @@ export function buildEmailPreview(form: ReportForm): EmailPreviewResult {
     const recipient = form.recipientEmail || "[Alıcı seçilmedi]";
 
     // 3. Build Body
-    let body = "";
+    const typeWord = form.type === "Missing" ? "eksik" : "hasarlı";
+    const typeWordTitle = form.type === "Missing" ? "Eksik" : "Hasarlı";
+
+    let body = "Sayın Yetkili,\n\n";
+    body += `Aşağıda bilgileri yer alan sevkiyat kapsamında, mağazamıza teslim edilmesi gereken bazı ürünlerin ${typeWord} olarak ulaştığı tespit edilmiştir.\n\n`;
+    body += "İlgili sevkiyata ait detaylar sistem kayıtlarımızda ve ekte sunulan görsellerde açıkça yer almaktadır.\n\n";
+    body += `${typeWordTitle} teslimatın incelenerek gerekli aksiyonların alınmasını, tarafımıza geri dönüş sağlanmasını rica ederiz.\n\n`;
+    body += "Bilgilerinize sunar, iyi çalışmalar dileriz.\n\n";
+    body += "Saygılarımızla.\n\n";
+    body += "--------------------------------------------------\n";
+    body += "BİLDİRİM DETAYLARI\n";
+    body += "--------------------------------------------------\n";
     body += `Rapor No: ${reportNo}\n`;
     body += `Mağaza: ${form.storeCode || "[MAĞAZA KODU EKSİK]"}\n`;
     body += `TPL No: ${form.tplNo || "[TPL NO EKSİK]"}\n`;
@@ -63,11 +74,7 @@ export function buildEmailPreview(form: ReportForm): EmailPreviewResult {
     body += `Sevkiyat Tarihi: ${formattedDate}\n\n`;
 
     // Products
-    if (form.type === "Missing") {
-        body += "Eksik Ürünler:\n";
-    } else {
-        body += "Hasarlı Ürünler:\n";
-    }
+    body += `${typeWordTitle} Ürünler:\n`;
 
     if (!form.items || form.items.length === 0) {
         body += "- (Ürün girilmedi)\n";
@@ -77,20 +84,14 @@ export function buildEmailPreview(form: ReportForm): EmailPreviewResult {
             const pName = item.productName || "[Ürün Adı]";
             const qty = item.qty || 0;
 
-            let line = `- ${pNo}: ${pName} (Miktar: ${qty}`;
+            let line = `- ${pNo} - ${pName} (Miktar: ${qty}`;
 
             if (form.type === "Damaged" && item.damageType) {
                 line += `, Hasar: ${item.damageType}`;
             }
-            // Close parenthesis
             line += ")";
             body += line + "\n";
         });
-    }
-
-    // Notes
-    if (form.notes) {
-        body += `\nNotlar: ${form.notes}\n`;
     }
 
     return {

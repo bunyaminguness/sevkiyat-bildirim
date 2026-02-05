@@ -33,6 +33,24 @@ public class EmailTemplateService : IEmailTemplateService
     {
         var sb = new StringBuilder();
         
+        var typeWord = report.Type == "Missing" ? "eksik" : "hasarlı";
+        var typeWordTitle = report.Type == "Missing" ? "Eksik" : "Hasarlı";
+
+        sb.AppendLine("Sayın Yetkili,");
+        sb.AppendLine();
+        sb.AppendLine($"Aşağıda bilgileri yer alan sevkiyat kapsamında, mağazamıza teslim edilmesi gereken bazı ürünlerin {typeWord} olarak ulaştığı tespit edilmiştir.");
+        sb.AppendLine();
+        sb.AppendLine("İlgili sevkiyata ait detaylar sistem kayıtlarımızda ve ekte sunulan görsellerde açıkça yer almaktadır.");
+        sb.AppendLine();
+        sb.AppendLine($"{typeWordTitle} teslimatın incelenerek gerekli aksiyonların alınmasını, tarafımıza geri dönüş sağlanmasını rica ederiz.");
+        sb.AppendLine();
+        sb.AppendLine("Bilgilerinize sunar, iyi çalışmalar dileriz.");
+        sb.AppendLine();
+        sb.AppendLine("Saygılarımızla.");
+        sb.AppendLine();
+        sb.AppendLine("--------------------------------------------------");
+        sb.AppendLine("BİLDİRİM DETAYLARI");
+        sb.AppendLine("--------------------------------------------------");
         sb.AppendLine($"Rapor No: {report.ReportNo ?? "TASLAK"}");
         sb.AppendLine($"Mağaza: {report.StoreCode}");
         sb.AppendLine($"TPL No: {report.TplNo}");
@@ -43,8 +61,7 @@ public class EmailTemplateService : IEmailTemplateService
         sb.AppendLine($"Sevkiyat Tarihi: {report.ShipmentDate:dd.MM.yyyy}");
         sb.AppendLine();
         
-        var typeLabel = report.Type == "Missing" ? "Eksik" : "Hasarlı";
-        sb.AppendLine($"{typeLabel} Ürünler:");
+        sb.AppendLine($"{typeWordTitle} Ürünler:");
         
         if (report.Items != null && report.Items.Any())
         {
@@ -61,13 +78,6 @@ public class EmailTemplateService : IEmailTemplateService
         else
         {
             sb.AppendLine("- (Ürün girilmedi)");
-        }
-        
-        if (!string.IsNullOrEmpty(report.Notes))
-        {
-            sb.AppendLine();
-            sb.AppendLine("Notlar:");
-            sb.AppendLine(report.Notes);
         }
         
         return sb.ToString();

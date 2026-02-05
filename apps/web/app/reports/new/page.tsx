@@ -12,6 +12,7 @@ interface ReportItem {
     productName: string;
     qty: number;
     damageType?: string;
+    photoUrl?: string;
 }
 
 interface RecipientOption {
@@ -45,11 +46,10 @@ export default function NewReportPage() {
         tplNo: '',
         waybillNo: '',
         shipmentDate: new Date().toISOString().split('T')[0],
-        notes: '',
     });
 
     const [items, setItems] = useState<ReportItem[]>([
-        { productNo: '', productName: '', qty: 1, damageType: '' },
+        { productNo: '', productName: '', qty: 1, damageType: '', photoUrl: '' },
     ]);
 
     // Recipient State
@@ -60,6 +60,9 @@ export default function NewReportPage() {
 
     // Preview State
     const [preview, setPreview] = useState({ subject: '', body: '', recipient: '' });
+
+    // Photo Attachments (In-Memory Only)
+    const [selectedPhotos, setSelectedPhotos] = useState<File[]>([]);
 
     // Fetch Recipient Options
     useEffect(() => {
@@ -126,7 +129,6 @@ export default function NewReportPage() {
             tplNo: formData.tplNo,
             waybillNo: formData.waybillNo,
             shipmentDate: formData.shipmentDate,
-            notes: formData.notes,
             items: items,
             recipientEmail: currentRecipient
         });
@@ -197,6 +199,7 @@ export default function NewReportPage() {
                 productName: item.productName,
                 qty: item.qty,
                 damageType: formData.type === 'Damaged' ? item.damageType : null,
+                photoUrl: item.photoUrl || null,
             })),
         };
     };
@@ -322,12 +325,26 @@ export default function NewReportPage() {
             const reportId = report.id;
 
             // 2. Send Email
-            const sendRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/${reportId}/send`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ sendViaSmtp: true }),
-            });
+            let sendRes;
+            if (selectedPhotos.length > 0) {
+                const sendFormData = new FormData();
+                selectedPhotos.forEach(file => {
+                    sendFormData.append('attachments', file);
+                });
+
+                sendRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/${reportId}/send-with-attachments`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: sendFormData,
+                });
+            } else {
+                sendRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/${reportId}/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ sendViaSmtp: true }),
+                });
+            }
 
             if (sendRes.status === 401) {
                 router.push('/login?error=session_expired');
@@ -377,11 +394,41 @@ export default function NewReportPage() {
     // --- Handlers for Inputs ---
 
     const addItem = () => {
-        setItems([...items, { productNo: '', productName: '', qty: 1, damageType: '' }]);
+        setItems([...items, { productNo: '', productName: '', qty: 1, damageType: '', photoUrl: '' }]);
     };
 
     const removeItem = (index: number) => {
-        setItems(items.filter((_, i) => i !== index));
+        if (items.length > 1) {
+            setItems(items.filter((_, i) => i !== index));
+        }
+    };
+
+    const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            const files = Array.from(e.target.files);
+            // Validation: Only images
+            const invalidFiles = files.filter(f => !f.type.startsWith('image/'));
+            if (invalidFiles.length > 0) {
+                alert('Lütfen sadece görsel dosyaları seçin.');
+                return;
+            }
+            // Validation: Size (10MB)
+            const largeFiles = files.filter(f => f.size > 10 * 1024 * 1024);
+            if (largeFiles.length > 0) {
+                alert('Bazı dosyalar 10MB limitini aşıyor.');
+                return;
+            }
+
+            if (selectedPhotos.length + files.length > 10) {
+                alert('En fazla 10 fotoğraf ekleyebilirsiniz.');
+                return;
+            }
+            setSelectedPhotos(prev => [...prev, ...files]);
+        }
+    };
+
+    const removePhoto = (index: number) => {
+        setSelectedPhotos(prev => prev.filter((_, i) => i !== index));
     };
 
     const updateItem = (index: number, field: keyof ReportItem, value: any) => {
@@ -553,18 +600,6 @@ export default function NewReportPage() {
                                     </div>
                                 </div>
 
-                                <div className="mt-6">
-                                    <label className="block text-base font-bold text-gray-800 mb-2">
-                                        Notlar
-                                    </label>
-                                    <textarea
-                                        value={formData.notes}
-                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                        rows={4}
-                                        className="w-full px-4 py-3 text-lg font-semibold text-gray-900 bg-gray-50 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-300 focus:border-blue-500 transition"
-                                        placeholder="Ek açıklamalar yazabilirsiniz..."
-                                    />
-                                </div>
                             </div>
                         </div>
 
@@ -637,10 +672,70 @@ export default function NewReportPage() {
                                                     />
                                                 </div>
                                             )}
+                                            <div className="md:col-span-2">
+                                                <input
+                                                    type="url"
+                                                    placeholder="Görsel URL (İsteğe bağlı)"
+                                                    value={item.photoUrl}
+                                                    onChange={(e) => updateItem(index, 'photoUrl', e.target.value)}
+                                                    className="w-full px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-400 placeholder-gray-400"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
+                        </div>
+
+                        {/* Photo Upload Section */}
+                        <div className="mt-8 pt-8 border-t-2 border-gray-200">
+                            <label className="block text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                İnceleme Fotoğrafları (Opsiyonel)
+                            </label>
+
+                            <div className="flex flex-wrap gap-4 items-center">
+                                <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-blue-400 transition group">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-1">
+                                        <svg className="w-8 h-8 text-gray-400 group-hover:text-blue-500 transition mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter group-hover:text-blue-600">Fotoğraf Ekle</span>
+                                    </div>
+                                    <input type="file" className="hidden" accept="image/*" multiple onChange={handlePhotoSelect} />
+                                </label>
+
+                                {selectedPhotos.map((file, idx) => (
+                                    <div key={idx} className="relative w-32 h-32 rounded-xl overflow-hidden border-2 border-white shadow-md group">
+                                        <img
+                                            src={URL.createObjectURL(file)}
+                                            alt="Preview"
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => removePhoto(idx)}
+                                            className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition shadow-lg z-10"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                        <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[10px] text-white px-2 py-1 truncate font-medium">
+                                            {file.name}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-sm text-gray-500 mt-3 italic font-medium flex items-center gap-1">
+                                <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Seçilen fotoğraflar sadece bu email ile gönderilir, sisteme kaydedilmez. (Max 10MB/dosya)
+                            </p>
                         </div>
 
                         {/* Action Buttons */}
