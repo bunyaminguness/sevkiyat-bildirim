@@ -45,7 +45,8 @@ public record ReportItemRequest(
     string ProductNo,
     string ProductName,
     int Qty,
-    string? DamageType
+    string? DamageType,
+    string? PhotoUrl = null
 );
 
 public record ReportDto(

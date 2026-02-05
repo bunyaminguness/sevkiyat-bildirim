@@ -172,6 +172,41 @@ public class ReportsController : ControllerBase
         }
     }
 
+    [HttpPost("{id}/send-with-attachments")]
+    [BusinessHours]
+    public async Task<IActionResult> SendReportWithAttachments(int id, [FromForm] List<IFormFile> attachments)
+    {
+        try
+        {
+            var emailAttachments = new List<EmailAttachment>();
+            
+            if (attachments != null && attachments.Any())
+            {
+                foreach (var file in attachments)
+                {
+                    // Validation: MIME type starts with "image/"
+                    if (!file.ContentType.StartsWith("image/"))
+                        return BadRequest(new { message_tr = $"Geçersiz dosya tipi: {file.FileName}. Sadece görsel yüklenebilir." });
+
+                    // Validation: Max size per file (10MB)
+                    if (file.Length > 10 * 1024 * 1024)
+                        return BadRequest(new { message_tr = $"Dosya boyutu çok büyük: {file.FileName}. Maksimum 10MB yüklenebilir." });
+
+                    using var ms = new MemoryStream();
+                    await file.CopyToAsync(ms);
+                    emailAttachments.Add(new EmailAttachment(file.FileName, ms.ToArray(), file.ContentType));
+                }
+            }
+
+            var result = await _reportService.SendReportAsync(id, GetUserId(), GetUserName(), true, emailAttachments);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message_tr = ex.Message });
+        }
+    }
+
     [HttpPost("{id}/accept")]
     [BusinessHours]
     public async Task<IActionResult> AcceptReport(int id)
