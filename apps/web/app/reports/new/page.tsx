@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { EmailPreviewPanel } from '@/components/EmailPreviewPanel';
 import { BusinessHoursBanner } from '@/components/BusinessHoursBanner';
@@ -58,8 +58,19 @@ export default function NewReportPage() {
     const [customRecipient, setCustomRecipient] = useState('');
     const [showCustomRecipient, setShowCustomRecipient] = useState(false);
 
-    // Preview State
-    const [preview, setPreview] = useState({ subject: '', body: '', recipient: '' });
+    // Derived Preview State
+    const preview = useMemo(() => {
+        const currentRecipient = showCustomRecipient ? customRecipient : selectedRecipient;
+        return buildEmailPreview({
+            storeCode: formData.storeCode,
+            type: formData.type,
+            tplNo: formData.tplNo,
+            waybillNo: formData.waybillNo,
+            shipmentDate: formData.shipmentDate,
+            items: items,
+            recipientEmail: currentRecipient
+        });
+    }, [formData, items, selectedRecipient, customRecipient, showCustomRecipient]);
 
     // Photo Attachments (In-Memory Only)
     const [selectedPhotos, setSelectedPhotos] = useState<File[]>([]);
@@ -120,20 +131,58 @@ export default function NewReportPage() {
         }
     };
 
-    // Live Preview Logic (Client Side)
+    // --- LocalStorage Persistence ---
+    const STORAGE_KEY = 'report_draft_v1';
+
+    // Load from LocalStorage
     useEffect(() => {
-        const currentRecipient = showCustomRecipient ? customRecipient : selectedRecipient;
-        const previewData = buildEmailPreview({
-            storeCode: formData.storeCode,
-            type: formData.type,
-            tplNo: formData.tplNo,
-            waybillNo: formData.waybillNo,
-            shipmentDate: formData.shipmentDate,
-            items: items,
-            recipientEmail: currentRecipient
-        });
-        setPreview(previewData);
+        const savedDraft = localStorage.getItem(STORAGE_KEY);
+        if (savedDraft) {
+            try {
+                const parsed = JSON.parse(savedDraft);
+                // Simple version check/sanity check
+                if (parsed.formData && parsed.items) {
+                    setFormData(parsed.formData);
+                    setItems(parsed.items);
+                    if (parsed.selectedRecipient) setSelectedRecipient(parsed.selectedRecipient);
+                    if (parsed.customRecipient) setCustomRecipient(parsed.customRecipient);
+                    if (parsed.showCustomRecipient) setShowCustomRecipient(parsed.showCustomRecipient);
+                }
+            } catch (err) {
+                console.error('Failed to parse saved draft', err);
+            }
+        }
+    }, []);
+
+    // Save to LocalStorage on change
+    useEffect(() => {
+        const draft = {
+            formData,
+            items,
+            selectedRecipient,
+            customRecipient,
+            showCustomRecipient
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
     }, [formData, items, selectedRecipient, customRecipient, showCustomRecipient]);
+
+    const resetForm = () => {
+        setFormData({
+            storeCode: '',
+            type: 'Missing',
+            tplNo: '',
+            waybillNo: '',
+            shipmentDate: new Date().toISOString().split('T')[0],
+        });
+        setItems([{ productNo: '', productName: '', qty: 1, damageType: '', photoUrl: '' }]);
+        setCustomRecipient('');
+        setShowCustomRecipient(false);
+        if (recipientOptions.length > 0) {
+            setSelectedRecipient(recipientOptions[0].email);
+        }
+        setSelectedPhotos([]);
+        localStorage.removeItem(STORAGE_KEY);
+    };
 
     // --- Validation Logic ---
 
@@ -258,6 +307,7 @@ export default function NewReportPage() {
 
             // Success
             setSuccessMessage(`Taslak başarıyla kaydedildi. (Rapor No: ${report.reportNo || 'Yeni'})`);
+            resetForm();
             setTimeout(() => {
                 router.push('/reports'); // Redirect to list
             }, 1000);
@@ -376,6 +426,7 @@ export default function NewReportPage() {
             }
 
             setSuccessMessage(`Email gönderildi ve bildirim kaydedildi! ✅`);
+            resetForm();
             setTimeout(() => {
                 router.push('/reports');
             }, 1500);
