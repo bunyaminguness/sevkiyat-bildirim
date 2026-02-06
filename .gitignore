@@ -36,10 +36,3 @@ yarn-error.log*
 *.db-shm
 *.db-wal
 
-# dotnet build / publish
-**/bin/
-**/obj/
-**/publish/
-*.dll
-*.exe
-*.pdb
