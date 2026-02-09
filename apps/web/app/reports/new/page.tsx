@@ -84,13 +84,25 @@ export default function NewReportPage() {
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    setRecipientOptions(data);
                     if (data.length > 0) {
+                        setRecipientOptions(data);
                         setSelectedRecipient(data[0].email);
+                        setShowCustomRecipient(false);
+                    } else {
+                        // Success but empty list -> fallback to custom
+                        setRecipientOptions([]);
+                        setShowCustomRecipient(true);
                     }
+                } else {
+                    // API fail (e.g. 404) -> fallback to custom
+                    setRecipientOptions([]);
+                    setShowCustomRecipient(true);
                 }
             } catch (err) {
                 console.error('Failed to fetch recipients', err);
+                // Fetch fail -> fallback to custom
+                setRecipientOptions([]);
+                setShowCustomRecipient(true);
             }
         }
         fetchRecipients();
@@ -569,30 +581,49 @@ export default function NewReportPage() {
                                     <label className={`block text-base font-bold mb-2 ${validationErrors.fields['recipient'] ? 'text-red-600' : 'text-gray-800'}`}>
                                         Kime (Alıcı) <span className="text-red-600">*</span>
                                     </label>
-                                    <select
-                                        value={showCustomRecipient ? 'custom' : selectedRecipient}
-                                        onChange={handleRecipientChange}
-                                        className={`w-full px-4 py-3 text-lg font-semibold text-gray-900 bg-gray-50 border-2 rounded-xl focus:ring-4 transition ${validationErrors.fields['recipient'] ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-300 focus:border-blue-500'}`}
-                                    >
-                                        {recipientOptions.map((opt) => (
-                                            <option key={opt.email} value={opt.email}>
-                                                {opt.label} ({opt.email})
-                                            </option>
-                                        ))}
-                                        <option value="custom">✏️ Özel Email Gir...</option>
-                                    </select>
+
+                                    {recipientOptions.length > 0 ? (
+                                        <select
+                                            value={showCustomRecipient ? 'custom' : selectedRecipient}
+                                            onChange={handleRecipientChange}
+                                            className={`w-full px-4 py-3 text-lg font-semibold text-gray-900 bg-gray-50 border-2 rounded-xl focus:ring-4 transition ${validationErrors.fields['recipient'] ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-300 focus:border-blue-500'}`}
+                                        >
+                                            {recipientOptions.map((opt) => (
+                                                <option key={opt.email} value={opt.email}>
+                                                    {opt.label} ({opt.email})
+                                                </option>
+                                            ))}
+                                            <option value="custom">✏️ Özel Email Gir...</option>
+                                        </select>
+                                    ) : (
+                                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm flex items-center gap-2 mb-2">
+                                            <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Alıcı listesi yüklenemedi, manuel e-posta giriliyor.
+                                        </div>
+                                    )}
 
                                     {showCustomRecipient && (
                                         <div className="space-y-2 animate-fade-in-down">
                                             <label className="block text-sm font-bold text-gray-700">
-                                                Özel E-posta
+                                                {recipientOptions.length > 0 ? "Özel E-posta" : "Alıcı E-posta"}
                                             </label>
                                             <input
                                                 type="email"
                                                 autoFocus
                                                 placeholder="ornek@firma.com"
                                                 value={customRecipient}
-                                                onChange={(e) => setCustomRecipient(e.target.value.trim().toLowerCase())}
+                                                onChange={(e) => {
+                                                    setCustomRecipient(e.target.value.trim().toLowerCase());
+                                                    // Clear validaton error when typing
+                                                    if (validationErrors.fields['recipient']) {
+                                                        setValidationErrors(prev => ({
+                                                            ...prev,
+                                                            fields: { ...prev.fields, recipient: false }
+                                                        }));
+                                                    }
+                                                }}
                                                 className={`w-full px-4 py-3 text-lg font-semibold text-gray-900 bg-white border-2 rounded-xl focus:ring-4 transition ${validationErrors.fields['recipient'] ? 'border-red-500 focus:ring-red-200' : 'border-blue-300 focus:ring-blue-300 focus:border-blue-500'}`}
                                             />
                                             {validationErrors.fields['recipient'] && validationErrors.general.some(err => err.includes('email')) && (
