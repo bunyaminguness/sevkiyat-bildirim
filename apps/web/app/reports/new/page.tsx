@@ -169,7 +169,6 @@ export default function NewReportPage() {
                     setItems(parsed.items);
                     if (parsed.selectedRecipient) setSelectedRecipient(parsed.selectedRecipient);
                     if (parsed.customRecipient) setCustomRecipient(parsed.customRecipient);
-                    if (parsed.showCustomRecipient) setShowCustomRecipient(parsed.showCustomRecipient);
                 }
             } catch (err) {
                 console.error('Failed to parse saved draft', err);
@@ -183,11 +182,10 @@ export default function NewReportPage() {
             formData,
             items,
             selectedRecipient,
-            customRecipient,
-            showCustomRecipient
+            customRecipient
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
-    }, [formData, items, selectedRecipient, customRecipient, showCustomRecipient]);
+    }, [formData, items, selectedRecipient, customRecipient]);
 
     const resetForm = () => {
         setFormData({
@@ -604,7 +602,7 @@ export default function NewReportPage() {
                                         </div>
                                     )}
 
-                                    {showCustomRecipient && (
+                                    {(showCustomRecipient || recipientOptions.length === 0) && (
                                         <div className="space-y-2 animate-fade-in-down">
                                             <label className="block text-sm font-bold text-gray-700">
                                                 {recipientOptions.length > 0 ? "Özel E-posta" : "Alıcı E-posta"}
