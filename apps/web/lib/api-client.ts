@@ -143,7 +143,6 @@ class ApiClient {
         options: RequestInit = {}
     ): Promise<T> {
         const url = `${getApiUrl()}${endpoint}`;
-        // ... implementation
         const config: RequestInit = {
             ...options,
             credentials: 'include',
@@ -157,8 +156,21 @@ class ApiClient {
             const response = await fetch(url, config);
 
             if (!response.ok) {
-                const error: ApiError = await response.json();
-                throw new Error(error.message_tr || 'Bir hata oluştu');
+                // Safely try to parse error response
+                let errorMessage = 'Bir hata oluştu';
+                try {
+                    const text = await response.text();
+                    if (text) {
+                        const error = JSON.parse(text);
+                        errorMessage = error.message_tr || error.message || errorMessage;
+                    }
+                } catch {
+                    // Non-JSON response (e.g., 404 HTML page)
+                    if (response.status === 404) {
+                        errorMessage = 'API endpoint bulunamadı. Sunucu bağlantısını kontrol edin.';
+                    }
+                }
+                throw new Error(errorMessage);
             }
 
             if (response.status === 204) {

@@ -1,3 +1,5 @@
+import { getApiUrl } from './api-url';
+
 export interface SystemStatus {
     isWithinBusinessHours: boolean;
     businessHours: {
@@ -21,7 +23,7 @@ export interface BusinessHoursError {
 }
 
 export async function getSystemStatus(): Promise<SystemStatus> {
-    const response = await fetch('http://localhost:5279/api/system/status', {
+    const response = await fetch(`${getApiUrl()}/api/system/status`, {
         credentials: 'include',
     });
 
@@ -31,3 +33,4 @@ export async function getSystemStatus(): Promise<SystemStatus> {
 
     return response.json();
 }
+

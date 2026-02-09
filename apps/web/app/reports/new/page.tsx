@@ -6,6 +6,7 @@ import { EmailPreviewPanel } from '@/components/EmailPreviewPanel';
 import { BusinessHoursBanner } from '@/components/BusinessHoursBanner';
 import { buildEmailPreview } from '@/utils/email-preview';
 import { getSystemStatus, SystemStatus } from '@/lib/system-api';
+import { getApiUrl } from '@/lib/api-url';
 
 interface ReportItem {
     productNo: string;
@@ -79,7 +80,7 @@ export default function NewReportPage() {
     useEffect(() => {
         async function fetchRecipients() {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/recipient-options`, {
+                const res = await fetch(`${getApiUrl()}/api/reports/recipient-options`, {
                     credentials: 'include'
                 });
                 if (res.ok) {
@@ -287,7 +288,7 @@ export default function NewReportPage() {
 
         try {
             const payload = buildPayload();
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports`, {
+            const res = await fetch(`${getApiUrl()}/api/reports`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -303,7 +304,8 @@ export default function NewReportPage() {
                 // Check for business hours error
                 if (res.status === 403) {
                     try {
-                        const errData = await res.json();
+                        const text = await res.text();
+                        const errData = text ? JSON.parse(text) : {};
                         if (errData.code === 'outside_business_hours') {
                             // Update state to show banner
                             setIsWithinBusinessHours(false);
@@ -317,10 +319,18 @@ export default function NewReportPage() {
                             throw new Error(errData.message || 'Kullanım saatleri dışında işlem yapılamaz.');
                         }
                     } catch (jsonErr) {
-                        throw new Error('Erişim engellendi.');
+                        if (jsonErr instanceof SyntaxError) {
+                            throw new Error('Erişim engellendi.');
+                        }
+                        throw jsonErr;
                     }
                 }
-                const errData = await res.json();
+                // Safe JSON parsing for other errors
+                let errData: any = {};
+                try {
+                    const text = await res.text();
+                    errData = text ? JSON.parse(text) : {};
+                } catch { /* non-JSON response */ }
                 throw new Error(errData.message_tr || 'Taslak kaydedilemedi.');
             }
 
@@ -356,7 +366,7 @@ export default function NewReportPage() {
         try {
             // 1. Create Report (Draft)
             const payload = buildPayload();
-            const createRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports`, {
+            const createRes = await fetch(`${getApiUrl()}/api/reports`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -372,7 +382,8 @@ export default function NewReportPage() {
                 // Check for business hours error
                 if (createRes.status === 403) {
                     try {
-                        const errData = await createRes.json();
+                        const text = await createRes.text();
+                        const errData = text ? JSON.parse(text) : {};
                         if (errData.code === 'outside_business_hours') {
                             setIsWithinBusinessHours(false);
                             if (errData.businessHours) {
@@ -385,10 +396,18 @@ export default function NewReportPage() {
                             throw new Error(errData.message || 'Kullanım saatleri dışında işlem yapılamaz.');
                         }
                     } catch (jsonErr) {
-                        throw new Error('Erişim engellendi.');
+                        if (jsonErr instanceof SyntaxError) {
+                            throw new Error('Erişim engellendi.');
+                        }
+                        throw jsonErr;
                     }
                 }
-                const errData = await createRes.json();
+                // Safe JSON parsing for other errors
+                let errData: any = {};
+                try {
+                    const text = await createRes.text();
+                    errData = text ? JSON.parse(text) : {};
+                } catch { /* non-JSON response */ }
                 throw new Error(errData.message_tr || 'Rapor oluşturulamadı.');
             }
 
@@ -403,13 +422,13 @@ export default function NewReportPage() {
                     sendFormData.append('attachments', file);
                 });
 
-                sendRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/${reportId}/send-with-attachments`, {
+                sendRes = await fetch(`${getApiUrl()}/api/reports/${reportId}/send-with-attachments`, {
                     method: 'POST',
                     credentials: 'include',
                     body: sendFormData,
                 });
             } else {
-                sendRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports/${reportId}/send`, {
+                sendRes = await fetch(`${getApiUrl()}/api/reports/${reportId}/send`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -426,7 +445,8 @@ export default function NewReportPage() {
                 // Check for business hours error on send
                 if (sendRes.status === 403) {
                     try {
-                        const errData = await sendRes.json();
+                        const text = await sendRes.text();
+                        const errData = text ? JSON.parse(text) : {};
                         if (errData.code === 'outside_business_hours') {
                             setIsWithinBusinessHours(false);
                             if (errData.businessHours) {
@@ -439,10 +459,18 @@ export default function NewReportPage() {
                             throw new Error(errData.message || 'Kullanım saatleri dışında işlem yapılamaz.');
                         }
                     } catch (jsonErr) {
-                        throw new Error('Erişim engellendi.');
+                        if (jsonErr instanceof SyntaxError) {
+                            throw new Error('Erişim engellendi.');
+                        }
+                        throw jsonErr;
                     }
                 }
-                const errData = await sendRes.json();
+                // Safe JSON parsing for other errors
+                let errData: any = {};
+                try {
+                    const text = await sendRes.text();
+                    errData = text ? JSON.parse(text) : {};
+                } catch { /* non-JSON response */ }
                 throw new Error(errData.message_tr || 'Email gönderilemedi.');
             }
 
