@@ -15,12 +15,18 @@ public class EmailTemplateService : IEmailTemplateService
         else
             subject.Append("TASLAK");
             
-        // Type
-        subject.Append($" | {report.Type}");
+        // Type - translate to Turkish
+        var typeText = report.Type == "Missing" ? "Eksik Ürün Bildirim" : "Hasar Ürün Bildirim";
+        subject.Append($" | {typeText}");
         
-        // TPL
+        // TPL - avoid duplicate "TPL" prefix if user already typed it
         if (!string.IsNullOrEmpty(report.TplNo))
-            subject.Append($" | TPL {report.TplNo}");
+        {
+            var tplValue = report.TplNo.TrimStart();
+            if (tplValue.StartsWith("TPL", StringComparison.OrdinalIgnoreCase))
+                tplValue = tplValue.Substring(3).TrimStart();
+            subject.Append($" | TPL {tplValue}");
+        }
             
         // Store
         if (!string.IsNullOrEmpty(report.StoreCode))
