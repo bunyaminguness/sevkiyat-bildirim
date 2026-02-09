@@ -27,9 +27,11 @@ export function buildEmailPreview(form: ReportForm): EmailPreviewResult {
     // 1. Determine Subject
     const isDraft = !form.reportNo;
     const reportNoDisplay = form.reportNo || "TASLAK";
-    const reportTypeText = form.type === "Missing" ? "Eksik Ürün" : "Hasarlı Ürün";
+    const reportTypeText = form.type === "Missing" ? "Eksik Ürün Bildirim" : "Hasar Ürün Bildirim";
 
-    const tplPart = form.tplNo ? ` | TPL ${form.tplNo}` : " | [TPL No Eksik]";
+    // Avoid duplicate "TPL" if user already typed it
+    const tplValue = form.tplNo ? form.tplNo.replace(/^TPL\s*/i, '').trim() : '';
+    const tplPart = tplValue ? ` | TPL ${tplValue}` : " | [TPL No Eksik]";
     const storePart = form.storeCode ? ` | Mağaza ${form.storeCode}` : " | [Mağaza Kodu Eksik]";
 
     const subject = `${reportNoDisplay} | ${reportTypeText}${tplPart}${storePart}`;
