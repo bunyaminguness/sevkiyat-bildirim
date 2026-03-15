@@ -321,7 +321,7 @@ cat .env.local
 
 ## License
 
-Proprietary - Internal Use Only
+This project is licensed under the MIT License.
 
 ## Support
 
