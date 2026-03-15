@@ -34,7 +34,14 @@ cd sevkiyat-bildirim
 docker-compose up -d
 ```
 
-### 3. Run Backend API
+### 3. Setup Configuration
+
+```bash
+cp apps/api/appsettings.example.json apps/api/appsettings.json
+# Open apps/api/appsettings.json and fill in your values
+```
+
+### 4. Run Backend API
 
 ```bash
 cd apps/api
@@ -139,29 +146,37 @@ Draft → Sent → Accepted → Closed
 
 ## Configuration
 
-### Backend (appsettings.json)
+### Backend Configuration
 
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=sevkiyat_bildirim;Username=postgres;Password=postgres"
-  },
-  "Jwt": {
-    "Secret": "YourSecretKeyHere",
-    "Issuer": "SevkiyatBildirimApi",
-    "Audience": "SevkiyatBildirimWeb"
-  },
-  "Email": {
-    "SmtpEnabled": false,
-    "SmtpHost": "smtp.example.com",
-    "SmtpPort": 587,
-    "SmtpUsername": "your-username",
-    "SmtpPassword": "your-password",
-    "FromAddress": "noreply@example.com",
-    "DefaultRecipient": "lojistik@example.com"
-  }
-}
-```
+> [!IMPORTANT]
+> This repository uses a security-first configuration approach. **No real credentials, secrets, or keys are stored in Git.**
+
+#### Local Setup
+
+1. Copy the example configuration files:
+   ```bash
+   # API Configuration
+   cp apps/api/appsettings.example.json apps/api/appsettings.json
+   cp apps/api/.env.example apps/api/.env
+   
+   # Web Configuration
+   cp apps/web/.env.example apps/web/.env.local
+   ```
+2. Fill in the required values in your local `.env` or `appsettings.json` files. These files are ignored by Git.
+
+#### Required Environment Variables
+
+For production or Docker environments, ensure the following are set:
+
+- `DATABASE_URL`: PostgreSQL connection string (e.g., `Host=db;Database=sevkiyat_db;Username=postgres;Password=...`)
+- `JWT_SECRET`: A long, random string for JWT signing.
+- `GOOGLE_CLIENT_SECRET`: Your Google OAuth client secret.
+- `SMTP_PASSWORD`: Your email service password or app-specific password.
+
+#### Security Notes
+
+- **.gitignore**: The repository is configured to ignore all `.env*`, `appsettings.json`, `appsettings.Development.json`, and `appsettings.Production.json` files except for `.env.example` and `appsettings.example.json`.
+- **History**: If you previously committed secrets, it is recommended to rotate them immediately even if they are removed from the current tree.
 
 ### Frontend (.env.local)
 
