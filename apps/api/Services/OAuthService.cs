@@ -34,7 +34,8 @@ public class OAuthService : IOAuthService
         try
         {
             var clientId = _configuration["Authentication:Google:ClientId"];
-            var clientSecret = _configuration["Authentication:Google:ClientSecret"];
+            var clientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET") 
+                ?? _configuration["Authentication:Google:ClientSecret"];
 
             if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
             {
@@ -113,7 +114,8 @@ public class OAuthService : IOAuthService
         try
         {
             var clientId = _configuration["Authentication:Google:ClientId"];
-            var clientSecret = _configuration["Authentication:Google:ClientSecret"];
+            var clientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET") 
+                ?? _configuration["Authentication:Google:ClientSecret"];
 
             if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
             {

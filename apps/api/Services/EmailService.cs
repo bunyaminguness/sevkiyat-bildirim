@@ -216,7 +216,8 @@ public class EmailService : IEmailService
             var host = _configuration["Email:SmtpHost"];
             var port = _configuration.GetValue<int>("Email:SmtpPort");
             var username = _configuration["Email:SmtpUsername"];
-            var password = _configuration["Email:SmtpPassword"];
+            var password = Environment.GetEnvironmentVariable("SMTP_PASSWORD") 
+                ?? _configuration["Email:SmtpPassword"];
             var from = _configuration["Email:FromAddress"];
 
             if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(from))
