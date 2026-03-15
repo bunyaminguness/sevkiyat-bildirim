@@ -8,8 +8,8 @@ POST http://localhost:5000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "manager@demo.com",
-  "password": "Demo123!"
+  "email": "YOUR_EMAIL",
+  "password": "YOUR_PASSWORD"
 }
 ```
 
