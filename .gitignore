@@ -3,16 +3,26 @@ node_modules/
 **/node_modules/
 
 # Build outputs
+bin/
 **/bin/
+obj/
 **/obj/
+publish/
+**/publish/
 **/.next/
 **/dist/
 **/build/
 
 # Environment files
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+
+# App settings
+appsettings.json
+appsettings.Production.json
+appsettings.Development.json
+**/secrets.json
 
 # OS files
 .DS_Store
@@ -35,4 +45,3 @@ yarn-error.log*
 *.db
 *.db-shm
 *.db-wal
-

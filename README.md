@@ -257,6 +257,21 @@ To send emails directly via the logged-in user's Gmail account:
 
 **How it works**: When users click "Google ile Devam Et", they're redirected to the backend (`/api/auth/google`), which initiates the OAuth flow with Google. After authorization, Google redirects back to the backend callback (`/api/auth/google/callback`), which creates a session and redirects the user to the frontend.
 
+## Local Setup (Security First)
+
+1. **Environment Variables**: The application is configured to prioritize environment variables for sensitive data. 
+2. **Setup**:
+   - Copy `apps/api/appsettings.example.json` to `apps/api/appsettings.json`.
+   - Update `appsettings.json` with your local database information.
+   - Set the following environment variables locally for complete functionality:
+     - `DATABASE_URL`: Connection string (falls back to `appsettings.json`)
+     - `JWT_SECRET`: Your secret key for token generation (MUST be set)
+     - `SMTP_PASSWORD`: If you need to send emails via SMTP.
+     - `GOOGLE_CLIENT_SECRET`: For Google OAuth login.
+
+> [!IMPORTANT]
+> Never commit real secrets to this repository. Use the provided `.example` files as templates and add your sensitive data to local `.env` or `appsettings.json` files which are ignored by git.
+
 ## Security
 
 - Passwords are hashed using BCrypt
