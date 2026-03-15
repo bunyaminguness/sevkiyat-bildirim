@@ -1,27 +1,18 @@
-# Environment files
-.env
-.env.local
-.env.*
-!.env.example
-
-# App settings
-appsettings.json
-appsettings.Production.json
-appsettings.Development.json
-**/secrets.json
+# Dependencies
+node_modules/
+**/node_modules/
 
 # Build outputs
 **/bin/
 **/obj/
-**/publish/
 **/.next/
 **/dist/
 **/build/
-**/*.dll
-**/*.exe
-**/*.pdb
-**/*.user
-**/*.suo
+
+# Environment files
+.env
+.env.local
+.env.*.local
 
 # OS files
 .DS_Store
@@ -45,6 +36,3 @@ yarn-error.log*
 *.db-shm
 *.db-wal
 
-# Dependencies
-node_modules/
-**/node_modules/

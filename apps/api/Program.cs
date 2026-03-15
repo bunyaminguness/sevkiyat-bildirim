@@ -16,10 +16,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 // Database
-var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") 
-    ?? builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Forwarded Headers (for Nginx/Proxy)
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
@@ -30,9 +28,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 // Authentication & Authorization
-var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") 
-    ?? builder.Configuration["Jwt:Secret"] 
-    ?? throw new InvalidOperationException("JWT Secret not configured");
+var jwtSecret = builder.Configuration["Jwt:Secret"] ?? throw new InvalidOperationException("JWT Secret not configured");
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
