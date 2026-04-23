@@ -9,6 +9,7 @@ obj/
 **/obj/
 publish/
 **/publish/
+apps/api/publish_locked/
 **/.next/
 **/dist/
 **/build/
