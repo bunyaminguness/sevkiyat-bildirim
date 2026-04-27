@@ -14,33 +14,8 @@ public class BusinessHoursAttribute : ActionFilterAttribute
 {
     public override void OnActionExecuting(ActionExecutingContext context)
     {
-        var businessHoursService = context.HttpContext.RequestServices
-            .GetRequiredService<IBusinessHoursService>();
-
-        var isWithinHours = businessHoursService.IsWithinHours(DateTime.UtcNow);
-
-        if (!isWithinHours)
-        {
-            var hoursInfo = businessHoursService.GetBusinessHoursInfo();
-            var businessHoursDto = new BusinessHoursDto(
-                hoursInfo.Start,
-                hoursInfo.End,
-                hoursInfo.TimeZone,
-                hoursInfo.Days
-            );
-
-            var errorResponse = new BusinessHoursErrorResponse(
-                "outside_business_hours",
-                $"Kullanım saatleri dışında işlem yapılamaz. ({hoursInfo.Start}–{hoursInfo.End})",
-                businessHoursDto
-            );
-
-            context.Result = new ObjectResult(errorResponse)
-            {
-                StatusCode = 403
-            };
-        }
-
-        base.OnActionExecuting(context);
+    // Business-hours restriction removed: keep attribute for backwards compatibility,
+    // but don't block requests.
+    base.OnActionExecuting(context);
     }
 }

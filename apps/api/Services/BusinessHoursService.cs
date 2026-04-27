@@ -34,47 +34,18 @@ public class BusinessHoursService : IBusinessHoursService
 
     public bool IsWithinHours(DateTime utcNow)
     {
-        if (!_enabled)
-            return true;
-
-        try
-        {
-            // Convert UTC to target timezone
-            var timeZone = TimeZoneInfo.FindSystemTimeZoneById(_timeZone);
-            var localTime = TimeZoneInfo.ConvertTimeFromUtc(utcNow, timeZone);
-            
-            // Check day of week
-            if (!_allowedDays.Contains(localTime.DayOfWeek))
-                return false;
-            
-            var currentTime = localTime.TimeOfDay;
-            
-            // Handle overnight windows (e.g., 22:00 - 06:00)
-            if (_end < _start)
-            {
-                return currentTime >= _start || currentTime < _end;
-            }
-            
-            // Normal day window (e.g., 09:00 - 18:00)
-            return currentTime >= _start && currentTime < _end;
-        }
-        catch
-        {
-            // If timezone conversion fails, allow access (fail open)
-            return true;
-        }
+    // Business-hours restriction removed: app should be usable 7/24.
+    return true;
     }
 
     public BusinessHoursInfo GetBusinessHoursInfo()
     {
-        var daysConfig = _configuration.GetSection("BusinessHours:Days").Get<string[]>() 
-            ?? new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
-        
+        // Keep response shape for clients, but represent 24/7.
         return new BusinessHoursInfo(
-            _configuration["BusinessHours:Start"] ?? "09:00",
-            _configuration["BusinessHours:End"] ?? "18:00",
+            "00:00",
+            "23:59",
             _timeZone,
-            daysConfig
+            new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" }
         );
     }
 
