@@ -157,7 +157,12 @@ public class AuthController : ControllerBase
                 return Redirect($"{frontendUrl}/login?error=no_code");
             }
 
-            var redirectUri = $"{Request.Scheme}://{Request.Host}/api/auth/google/callback";
+            // Use the same redirect uri base as the initial GoogleLogin() call when configured,
+            // otherwise fall back to the current request host (development).
+            var oauthBase = _configuration["Auth:OAuthRedirectBaseUrl"];
+            var redirectUri = !string.IsNullOrEmpty(oauthBase)
+                ? $"{oauthBase}/api/auth/google/callback"
+                : $"{Request.Scheme}://{Request.Host}/api/auth/google/callback";
             var response = await _oauthService.HandleGoogleCallbackServerSide(code, redirectUri);
             
             // Set httpOnly cookie
