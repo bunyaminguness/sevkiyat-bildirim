@@ -85,13 +85,14 @@ builder.Services.AddSingleton<IBusinessHoursService, BusinessHoursService>();
 // CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowWebApp", policy =>
+    var allowedOrigins = builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>() ?? Array.Empty<string>();
+
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        // Read allowed origins from configuration, fallback to localhost for dev
-        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-            ?? new[] { "http://localhost:3000", "http://localhost:3001" };
-        
-        policy.WithOrigins(allowedOrigins)
+        policy
+            .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -116,7 +117,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowWebApp");
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();

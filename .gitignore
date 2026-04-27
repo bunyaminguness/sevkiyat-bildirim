@@ -25,6 +25,9 @@ appsettings.Production.json
 appsettings.Development.json
 **/secrets.json
 
+# Track example config templates
+!**/appsettings.example.json
+
 # OS files
 .DS_Store
 Thumbs.db
