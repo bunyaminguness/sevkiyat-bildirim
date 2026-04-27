@@ -85,9 +85,9 @@ builder.Services.AddSingleton<IBusinessHoursService, BusinessHoursService>();
 // CORS
 builder.Services.AddCors(options =>
 {
-    var allowedOrigins = builder.Configuration
-        .GetSection("Cors:AllowedOrigins")
-        .Get<string[]>() ?? Array.Empty<string>();
+    var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"]?
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        ?? Array.Empty<string>();
 
     options.AddPolicy("AllowFrontend", policy =>
     {
